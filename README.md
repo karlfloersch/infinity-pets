@@ -1,17 +1,31 @@
-## Foundry
+## Infinity Pets
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+An example horizontally scalable smart contract system and frontend application.
 
-Foundry consists of:
+The demo should:
+1. Show what the chain abstracted UX could look like with a Superchain-native embedded wallet.
+2. Demonstrate how TPS scales as new chains are deployed to the Superchain.
+3. Show how a simplified version of SAP can be implemented on top!
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
 
-## Documentation
+## TODO
+Here's the plan for today/tomorrow's hackathon:
 
-https://book.getfoundry.sh/
+[ ] Create frontend CREATE2 deployment & embedded wallet library
+  * This should be first because it will let me test the application super quickly.
+[ ] Create simple Twitter / message board app
+  * This will allow me to start testing reading and writing data onchain
+[ ] Create an onchain function to spin up a new Supersim chain
+  * This should look like a local service which watches my local chain for a 'new chain' event and then based on that event, spins up a new Supersim instance with a deterministic RPC / chain ID.
+[ ] Call this function in our frontend, so it becomes possible to deploy new chains via a tx
+  * This will be useful for showing the infinite scale
+[ ] Add a "spam" function which spams local chains with transactions & counts the TPS
+  * It should be clear that the number of txs you can spam increases with the number of chains you've got
+[ ] Write a function which generates the game state of (simplified) SAP based on messages posted in my Twitter clone
+  * It should read all the events for a particular Twitter topic and use it to generate a game state.
+[ ] Add a frontend which consumes game states and outputs a pretty UI
+  * Hopefully AI can do this for me
+
 
 ## Usage
 
@@ -49,18 +63,4 @@ $ anvil
 
 ```shell
 $ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
 ```
