@@ -3,7 +3,7 @@ import { createConfig, http } from '@wagmi/core'
 // Existing constants
 import { abi as counterAbi, bytecode as counterBytecode } from '../../out/Counter.sol/Counter.json'
 
-export const CREATE2_FACTORY_ADDRESS = '0x0000000000FFe8B47B3e2130213B802212439497'
+export const CREATE2_FACTORY_ADDRESS = '0x4e59b44847b379578588920cA78FbF26c0B4956C'
 
 export const INITIAL_CHAIN_ID = 901
 export const INITIAL_RPC_URL = 'http://localhost:9545'
