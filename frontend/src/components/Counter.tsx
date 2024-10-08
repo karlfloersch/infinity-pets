@@ -3,6 +3,8 @@ import {
   deployCounterContract,
   incrementCounter,
   getCounterValue,
+  isCounterContractDeployed,
+  getCounterAddress
 } from '../contractInteractions'
 import { INITIAL_CHAIN_ID } from '../constants'
 import { account } from '../wallet'
@@ -31,20 +33,25 @@ export function Counter() {
   const { executeTransaction } = useTransaction();
 
   const fetchCounterValue = useCallback(async () => {
-    if (state.counterAddress) {
+    if (state.isCounterDeployed) {
       try {
-        const value = await getCounterValue(state.counterAddress);
+        const value = await getCounterValue(getCounterAddress());
         dispatch({ type: 'SET_COUNTER_VALUE', payload: value.toString() });
       } catch (error) {
         console.error('Error fetching counter value:', error);
       }
     }
-  }, [state.counterAddress, dispatch]);
+  }, [state.isCounterDeployed, dispatch]);
+
+  const checkCounterDeployment = useCallback(async () => {
+    const isDeployed = await isCounterContractDeployed();
+    dispatch({ type: 'SET_COUNTER_DEPLOYED', payload: isDeployed });
+  }, [dispatch]);
 
   const handleDeploy = async () => {
     try {
-      const { contractAddress } = await executeTransaction('Deploy Contract', deployCounterContract);
-      dispatch({ type: 'SET_COUNTER_ADDRESS', payload: contractAddress });
+      await executeTransaction('Deploy Contract', deployCounterContract);
+      await checkCounterDeployment();
       await fetchCounterValue();
     } catch (error) {
       console.error(error);
@@ -52,9 +59,8 @@ export function Counter() {
   }
 
   const handleIncrement = async () => {
-    if (!state.counterAddress) return;
     try {
-      await executeTransaction('Increment Counter', incrementCounter, state.counterAddress);
+      await executeTransaction('Increment Counter', incrementCounter, getCounterAddress());
       await fetchCounterValue();
     } catch (error) {
       console.error(error);
@@ -62,21 +68,23 @@ export function Counter() {
   }
 
   useEffect(() => {
+    checkCounterDeployment();
     fetchCounterValue();
     const valueInterval = setInterval(fetchCounterValue, 5000); // Fetch value every 5 seconds
 
     return () => clearInterval(valueInterval);
-  }, [fetchCounterValue]);
+  }, [checkCounterDeployment, fetchCounterValue]);
 
   return (
     <div>
       <h2>Counter Contract</h2>
-      <button onClick={handleDeploy} disabled={state.transactionStatus.isProcessing}>
-        {state.transactionStatus.isProcessing ? 'Deploying...' : 'Deploy Counter'}
-      </button>
-      {state.counterAddress && (
+      {!state.isCounterDeployed ? (
+        <button onClick={handleDeploy} disabled={state.transactionStatus.isProcessing}>
+          {state.transactionStatus.isProcessing ? 'Deploying...' : 'Deploy Counter'}
+        </button>
+      ) : (
         <>
-          <p>Counter Address: {state.counterAddress}</p>
+          <p>Counter Address: {getCounterAddress()}</p>
           <p>Counter Value: {state.counterValue}</p>
           <button
             onClick={handleIncrement}

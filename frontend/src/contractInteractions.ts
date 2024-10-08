@@ -13,7 +13,12 @@ async function waitForReceipt(hash: `0x${string}`): Promise<TransactionReceipt> 
   })
 }
 
-// New function to compute contract address
+// Helper function to get the salt for the Counter contract
+export function getCounterSalt(): `0x${string}` {
+  return '0x' + keccak256(toHex('my_salt')).slice(2, 34).padStart(64, '0') as `0x${string}`
+}
+
+// Function to compute contract address
 export function computeContractAddress(bytecode: `0x${string}`, saltHex: `0x${string}`): Address {
   const initCodeHash = keccak256(bytecode)
   return getCreate2Address({
@@ -60,7 +65,7 @@ export async function deployCreate2Contract(
 
 // Function to deploy the Counter contract
 export async function deployCounterContract(): Promise<{ contractAddress: Address; receipt: TransactionReceipt }> {
-  const saltHex = '0x' + keccak256(toHex('my_salt')).slice(2, 34).padStart(64, '0') as `0x${string}`
+  const saltHex = getCounterSalt()
   console.debug('Deploying Counter contract with salt:', saltHex)
   return deployCreate2Contract(COUNTER_BYTECODE as `0x${string}`, saltHex)
 }
@@ -94,4 +99,27 @@ export async function getCounterValue(counterAddress: `0x${string}`): Promise<nu
 
   console.debug('Current counter value:', Number(value))
   return Number(value);
+}
+
+// Function to check if a contract is deployed at a given address
+export async function isContractDeployed(address: Address): Promise<boolean> {
+  try {
+    const code = await publicClient.getCode({ address })
+    // If the bytecode is not empty, the contract is deployed
+    return code !== undefined && code !== '0x'
+  } catch (error) {
+    console.error('Error checking contract deployment:', error)
+    return false
+  }
+}
+
+// Function to check if the Counter contract is deployed
+export async function isCounterContractDeployed(): Promise<boolean> {
+  return isContractDeployed(getCounterAddress())
+}
+
+// Function to get the Counter contract address
+export function getCounterAddress(): Address {
+  const saltHex = getCounterSalt()
+  return computeContractAddress(COUNTER_BYTECODE as `0x${string}`, saltHex)
 }

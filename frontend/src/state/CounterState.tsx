@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { Address } from 'viem';
 
 // Define the state shape
 interface CounterState {
-  counterAddress: Address | undefined;
+  isCounterDeployed: boolean;
   counterValue: string;
   transactionStatus: {
     isProcessing: boolean;
@@ -14,14 +13,14 @@ interface CounterState {
 
 // Define action types
 type Action =
-  | { type: 'SET_COUNTER_ADDRESS'; payload: Address }
+  | { type: 'SET_COUNTER_DEPLOYED'; payload: boolean }
   | { type: 'SET_COUNTER_VALUE'; payload: string }
   | { type: 'START_TRANSACTION'; payload: { name: string } }
   | { type: 'END_TRANSACTION'; payload: { name: string; success: boolean; error?: string } };
 
 // Initial state
 const initialState: CounterState = {
-  counterAddress: undefined,
+  isCounterDeployed: false,
   counterValue: '0',
   transactionStatus: {
     isProcessing: false,
@@ -33,8 +32,8 @@ const initialState: CounterState = {
 // Reducer function
 function counterReducer(state: CounterState, action: Action): CounterState {
   switch (action.type) {
-    case 'SET_COUNTER_ADDRESS':
-      return { ...state, counterAddress: action.payload };
+    case 'SET_COUNTER_DEPLOYED':
+      return { ...state, isCounterDeployed: action.payload };
     case 'SET_COUNTER_VALUE':
       return { ...state, counterValue: action.payload };
     case 'START_TRANSACTION':
