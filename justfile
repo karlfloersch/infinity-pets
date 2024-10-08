@@ -12,8 +12,13 @@ build-contracts:
 serve-frontend:
     cd frontend && npm run dev
 
-# Build contracts and serve frontend
-dev: build-contracts serve-frontend
+# Run supersim
+run-supersim:
+    ./supersim/supersim
+
+# Build contracts, run supersim, and serve frontend in parallel
+dev: build-contracts
+    just run-supersim & just serve-frontend
 
 # Build both contracts and frontend for production
 build: build-contracts
