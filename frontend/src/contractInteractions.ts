@@ -3,6 +3,16 @@ import { publicClient, walletClient, CREATE2_FACTORY_ADDRESS, COUNTER_ABI, COUNT
 import { account } from './wallet'
 import type { Address } from 'viem'
 
+// Helper function to wait for transaction receipt
+async function waitForReceipt(hash: `0x${string}`): Promise<TransactionReceipt> {
+  return publicClient.waitForTransactionReceipt({ 
+    hash,
+    pollingInterval: 100, // Poll every 100 milliseconds
+    retryDelay: 100,
+    retryCount: 100,
+  })
+}
+
 // Generalized function to deploy a contract using the CREATE2 factory
 export async function deployCreate2Contract(
   bytecode: `0x${string}`,
@@ -24,7 +34,7 @@ export async function deployCreate2Contract(
 
   console.debug('Transaction sent. Hash:', hash)
 
-  const receipt = await publicClient.waitForTransactionReceipt({ hash })
+  const receipt = await waitForReceipt(hash)
   console.debug('Contract deployment receipt:', {
     transactionHash: receipt.transactionHash,
     contractAddress: receipt.contractAddress,
@@ -65,7 +75,7 @@ export async function deployCounterContract(): Promise<{ contractAddress: Addres
 }
 
 // Function to increment the counter
-export async function incrementCounter(counterAddress: `0x${string}`): Promise<`0x${string}`> {
+export async function incrementCounter(counterAddress: `0x${string}`): Promise<TransactionReceipt> {
   console.debug('Incrementing counter at address:', counterAddress)
   const { request } = await publicClient.simulateContract({
     address: counterAddress,
@@ -76,7 +86,11 @@ export async function incrementCounter(counterAddress: `0x${string}`): Promise<`
 
   const hash = await walletClient.writeContract(request)
   console.debug('Increment transaction sent. Hash:', hash)
-  return hash
+
+  const receipt = await waitForReceipt(hash)
+  console.debug('Increment transaction receipt:', receipt)
+
+  return receipt
 }
 
 // Function to get the counter value
