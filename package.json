@@ -1,0 +1,12 @@
+{
+    "name": "infinity-pets",
+    "version": "1.0.0",
+    "scripts": {
+        "start": "concurrently \"npm:superchain\" \"npm:frontend\"",
+        "superchain": "./supersim/supersim",
+        "frontend": "cd frontend && npm start"
+    },
+    "devDependencies": {
+        "concurrently": "^7.0.0"
+    }
+}
