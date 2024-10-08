@@ -11,7 +11,7 @@ The demo should:
 ## TODO
 Here's the plan for today/tomorrow's hackathon:
 
-[ ] Create frontend CREATE2 deployment & embedded wallet library
+[x] Create frontend CREATE2 deployment & embedded wallet library
   * This should be first because it will let me test the application super quickly.
 [ ] Create simple Twitter / message board app
   * This will allow me to start testing reading and writing data onchain
@@ -27,40 +27,7 @@ Here's the plan for today/tomorrow's hackathon:
   * Hopefully AI can do this for me
 
 
-## Usage
 
-### Build
-
-```shell
-$ forge build
-```
-
-### Test
-
-```shell
-$ forge test
-```
-
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
+# Findings
+* It seems WAGMI doesn't have great support for the kind of embedded wallet I wanted to use. My ideal is a Passkey based wallet.
+* There is really terrible CREATE2 factory tooling. We need to implement a lot of helpers to get CREATE2 to be easy to use.

@@ -1,68 +1,72 @@
-import { keccak256, concat, pad, toHex, TransactionReceipt } from 'viem'
+import { keccak256, toHex, TransactionReceipt, getCreate2Address } from 'viem'
 import { publicClient, walletClient, CREATE2_FACTORY_ADDRESS, COUNTER_ABI, COUNTER_BYTECODE } from './constants'
 import { account } from './wallet'
+import type { Address } from 'viem'
 
 // Generalized function to deploy a contract using the CREATE2 factory
 export async function deployCreate2Contract(
   bytecode: `0x${string}`,
-  salt: string
-): Promise<{ contractAddress: `0x${string}`; receipt: TransactionReceipt }> {
-  // Convert the salt string to bytes and pad/truncate to 4 bytes
-  const saltBytes = new TextEncoder().encode(salt)
-  if (saltBytes.length > 4) {
-    throw new Error('Salt must be at most 4 bytes (4 ASCII characters).')
-  }
-  const saltPadded = pad(saltBytes, { size: 4 })
+  saltHex: `0x${string}`
+): Promise<{ contractAddress: Address; receipt: TransactionReceipt }> {
+  const data = `0x${saltHex.replace(/^0x/, '')}${bytecode.replace(/^0x/, '')}` as `0x${string}`
 
-  // Convert the salt bytes to hex
-  const saltHex = toHex(saltPadded)
+  console.debug('Deploying contract:')
+  console.debug('From:', account.address)
+  console.debug('To (CREATE2 Factory):', CREATE2_FACTORY_ADDRESS)
+  console.debug('Salt:', saltHex)
 
-  // Combine salt and bytecode to form calldata
-  const calldata = concat([saltHex, bytecode])
-
-  // Prepare and send the transaction
   const hash = await walletClient.sendTransaction({
     account,
     to: CREATE2_FACTORY_ADDRESS,
-    data: calldata,
+    data: data,
+    gas: BigInt(5000000),
   })
 
-  // Wait for the transaction receipt
-  const receipt = await publicClient.waitForTransactionReceipt({ hash })
+  console.debug('Transaction sent. Hash:', hash)
 
-  // Compute the contract address using CREATE2 formula
+  const receipt = await publicClient.waitForTransactionReceipt({ hash })
+  console.debug('Contract deployment receipt:', {
+    transactionHash: receipt.transactionHash,
+    contractAddress: receipt.contractAddress,
+    gasUsed: receipt.gasUsed,
+    status: receipt.status
+  })
+
+  const initCodeHash = keccak256(bytecode)
   const contractAddress = computeCreate2Address(
     CREATE2_FACTORY_ADDRESS,
     saltHex,
-    bytecode
+    initCodeHash
   )
+
+  console.debug('Computed contract address:', contractAddress)
 
   return { contractAddress, receipt }
 }
 
-// Helper function to compute the CREATE2 contract address
+// Updated function to compute the CREATE2 contract address
 function computeCreate2Address(
-  deployerAddress: `0x${string}`,
-  salt: `0x${string}`,
-  bytecode: `0x${string}`
-): `0x${string}` {
-  const create2Inputs = concat([
-    '0xff',
-    deployerAddress,
-    salt,
-    keccak256(bytecode)
-  ])
-  return `0x${keccak256(create2Inputs).slice(-40)}` as `0x${string}`
+  deployerAddress: Address,
+  saltHex: `0x${string}`,
+  initCodeHash: `0x${string}`
+): Address {
+  return getCreate2Address({
+    from: deployerAddress,
+    salt: saltHex,
+    bytecodeHash: initCodeHash,
+  })
 }
 
 // Function to deploy the Counter contract
-export async function deployCounterContract(): Promise<{ contractAddress: `0x${string}`; receipt: TransactionReceipt }> {
-  const salt = 'SAP' // Using 'SAP' as the salt
-  return deployCreate2Contract(COUNTER_BYTECODE as `0x${string}`, salt)
+export async function deployCounterContract(): Promise<{ contractAddress: Address; receipt: TransactionReceipt }> {
+  const saltHex = '0x' + keccak256(toHex('my_salt')).slice(2, 34).padStart(64, '0') as `0x${string}`
+  console.debug('Deploying Counter contract with salt:', saltHex)
+  return deployCreate2Contract(COUNTER_BYTECODE as `0x${string}`, saltHex)
 }
 
 // Function to increment the counter
 export async function incrementCounter(counterAddress: `0x${string}`): Promise<`0x${string}`> {
+  console.debug('Incrementing counter at address:', counterAddress)
   const { request } = await publicClient.simulateContract({
     address: counterAddress,
     abi: COUNTER_ABI,
@@ -70,7 +74,9 @@ export async function incrementCounter(counterAddress: `0x${string}`): Promise<`
     account: account.address,
   })
 
-  return walletClient.writeContract(request)
+  const hash = await walletClient.writeContract(request)
+  console.debug('Increment transaction sent. Hash:', hash)
+  return hash
 }
 
 // Function to get the counter value
@@ -81,5 +87,6 @@ export async function getCounterValue(counterAddress: `0x${string}`): Promise<nu
     functionName: 'getValue',
   }) as bigint;
 
+  console.debug('Current counter value:', Number(value))
   return Number(value);
 }
