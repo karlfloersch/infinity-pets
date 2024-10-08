@@ -13,6 +13,16 @@ async function waitForReceipt(hash: `0x${string}`): Promise<TransactionReceipt> 
   })
 }
 
+// New function to compute contract address
+export function computeContractAddress(bytecode: `0x${string}`, saltHex: `0x${string}`): Address {
+  const initCodeHash = keccak256(bytecode)
+  return getCreate2Address({
+    from: CREATE2_FACTORY_ADDRESS,
+    salt: saltHex,
+    bytecodeHash: initCodeHash,
+  })
+}
+
 // Generalized function to deploy a contract using the CREATE2 factory
 export async function deployCreate2Contract(
   bytecode: `0x${string}`,
@@ -42,29 +52,10 @@ export async function deployCreate2Contract(
     status: receipt.status
   })
 
-  const initCodeHash = keccak256(bytecode)
-  const contractAddress = computeCreate2Address(
-    CREATE2_FACTORY_ADDRESS,
-    saltHex,
-    initCodeHash
-  )
-
+  const contractAddress = computeContractAddress(bytecode, saltHex)
   console.debug('Computed contract address:', contractAddress)
 
   return { contractAddress, receipt }
-}
-
-// Updated function to compute the CREATE2 contract address
-function computeCreate2Address(
-  deployerAddress: Address,
-  saltHex: `0x${string}`,
-  initCodeHash: `0x${string}`
-): Address {
-  return getCreate2Address({
-    from: deployerAddress,
-    salt: saltHex,
-    bytecodeHash: initCodeHash,
-  })
 }
 
 // Function to deploy the Counter contract
