@@ -1,4 +1,5 @@
-import { createConfig, http } from '@wagmi/core'
+import { createPublicClient, createWalletClient, http } from 'viem'
+import { account } from './wallet'
 
 // Existing constants
 import { abi as counterAbi, bytecode as counterBytecode } from '../../out/Counter.sol/Counter.json'
@@ -17,21 +18,26 @@ export const customChain = {
   id: INITIAL_CHAIN_ID,
   name: 'Localhost',
   network: 'localhost',
-  rpcUrls: {
-    default: { http: [INITIAL_RPC_URL] },
-    public: { http: [INITIAL_RPC_URL] },
-  },
   nativeCurrency: {
     name: 'Ether',
     symbol: 'ETH',
     decimals: 18,
   },
+  rpcUrls: {
+    default: { http: [INITIAL_RPC_URL] },
+    public: { http: [INITIAL_RPC_URL] },
+  },
 }
 
-// Configure the client with the custom chain
-export const wagmiConfig = createConfig({
-  chains: [customChain],
-  transports: {
-    [customChain.id]: http(INITIAL_RPC_URL),
-  },
+// Configure the public client
+export const publicClient = createPublicClient({
+  chain: customChain,
+  transport: http(INITIAL_RPC_URL)
+})
+
+// Configure the wallet client with the account from wallet.ts
+export const walletClient = createWalletClient({
+  account,
+  chain: customChain,
+  transport: http(INITIAL_RPC_URL)
 })

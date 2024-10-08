@@ -1,14 +1,13 @@
-import { useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useState, useEffect } from 'react'
 import {
   deployCounterContract,
   incrementCounter,
   getCounterValue,
 } from '../contractInteractions'
 import { INITIAL_CHAIN_ID } from '../constants'
+import { account } from '../wallet'
 
 export function Counter() {
-  const { address } = useAccount()
   const [counterAddress, setCounterAddress] = useState<`0x${string}` | undefined>(
     undefined
   )
@@ -18,10 +17,9 @@ export function Counter() {
 
   // Handle deploying the contract
   const handleDeploy = async () => {
-    if (!address) return
     setIsDeploying(true)
     try {
-      const { contractAddress } = await deployCounterContract(address as `0x${string}`)
+      const { contractAddress } = await deployCounterContract()
       setCounterAddress(contractAddress)
       // Fetch the initial counter value
       const value = await getCounterValue(contractAddress)
@@ -36,10 +34,10 @@ export function Counter() {
 
   // Handle incrementing the counter
   const handleIncrement = async () => {
-    if (!counterAddress || !address) return
+    if (!counterAddress) return
     setIsIncrementing(true)
     try {
-      await incrementCounter(address as `0x${string}`, counterAddress)
+      await incrementCounter(counterAddress)
       // Fetch the updated counter value
       const value = await getCounterValue(counterAddress)
       setCounterValue(value.toString())
@@ -51,11 +49,30 @@ export function Counter() {
     }
   }
 
+  // Fetch counter value periodically
+  useEffect(() => {
+    if (!counterAddress) return
+
+    const fetchCounterValue = async () => {
+      try {
+        const value = await getCounterValue(counterAddress)
+        setCounterValue(value.toString())
+      } catch (error) {
+        console.error('Error fetching counter value:', error)
+      }
+    }
+
+    fetchCounterValue()
+    const interval = setInterval(fetchCounterValue, 5000) // Fetch every 5 seconds
+
+    return () => clearInterval(interval)
+  }, [counterAddress])
+
   return (
     <div>
       <h2>Counter Contract</h2>
       {!counterAddress && (
-        <button onClick={handleDeploy} disabled={!address || isDeploying}>
+        <button onClick={handleDeploy} disabled={isDeploying}>
           {isDeploying ? 'Deploying...' : 'Deploy Counter'}
         </button>
       )}
@@ -65,14 +82,14 @@ export function Counter() {
           <p>Counter Value: {counterValue}</p>
           <button
             onClick={handleIncrement}
-            disabled={!address || isIncrementing}
+            disabled={isIncrementing}
           >
             {isIncrementing ? 'Incrementing...' : 'Increment Counter'}
           </button>
         </>
       )}
       <p>Current Chain ID: {INITIAL_CHAIN_ID}</p>
-      <p>Current Account: {address || 'Not connected'}</p>
+      <p>Current Account: {account.address}</p>
     </div>
   )
 }
