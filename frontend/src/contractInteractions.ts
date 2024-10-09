@@ -1,4 +1,4 @@
-import { keccak256, toHex, TransactionReceipt, getCreate2Address } from 'viem'
+import { keccak256, toHex, TransactionReceipt, getCreate2Address, concat } from 'viem'
 import { publicClient, walletClient, CREATE2_FACTORY_ADDRESS, COUNTER_ABI, COUNTER_BYTECODE } from './constants'
 import { account } from './wallet'
 import type { Address } from 'viem'
@@ -122,4 +122,45 @@ export async function isCounterContractDeployed(): Promise<boolean> {
 export function getCounterAddress(): Address {
   const saltHex = getCounterSalt()
   return computeContractAddress(COUNTER_BYTECODE as `0x${string}`, saltHex)
+}
+
+export async function testEmitRead(
+  counterAddress: Address,
+  log: { 
+    address: Address, 
+    blockNumber: bigint, 
+    logIndex: number, 
+    topics: `0x${string}`[], 
+    data: `0x${string}` 
+  },
+  timestamp: bigint,
+  chainId: bigint
+): Promise<TransactionReceipt> {
+  const eventId = {
+    origin: log.address,
+    blockNumber: log.blockNumber,
+    logIndex: BigInt(log.logIndex),
+    timestamp,
+    chainId
+  }
+
+  const eventData = concat([...log.topics, log.data])
+
+  console.debug('Calling testEmitRead with:', { eventId, eventData })
+
+  const { request } = await publicClient.simulateContract({
+    address: counterAddress,
+    abi: COUNTER_ABI,
+    functionName: 'testEmitRead',
+    args: [eventId, eventData],
+    account: account.address,
+  })
+
+  const hash = await walletClient.writeContract(request)
+  console.debug('testEmitRead transaction sent. Hash:', hash)
+
+  const receipt = await waitForReceipt(hash)
+  console.debug('testEmitRead transaction receipt:', receipt)
+
+  return receipt
 }

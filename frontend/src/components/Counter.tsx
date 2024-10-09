@@ -4,7 +4,8 @@ import {
   incrementCounter,
   getCounterValue,
   isCounterContractDeployed,
-  getCounterAddress
+  getCounterAddress,
+  testEmitRead
 } from '../contractInteractions'
 import { INITIAL_CHAIN_ID, publicClient, COUNTER_ABI } from '../constants'
 import { account } from '../wallet'
@@ -63,6 +64,27 @@ export function Counter() {
     try {
       await executeTransaction('Increment Counter', incrementCounter, getCounterAddress());
       await fetchCounterValue();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const handleTestEmitRead = async () => {
+    if (state.logs.length === 0) {
+      console.error('No logs available to test');
+      return;
+    }
+
+    const latestLog = state.logs[state.logs.length - 1];
+    const counterAddress = getCounterAddress();
+
+    try {
+      await executeTransaction('Test Emit Read', testEmitRead, 
+        counterAddress,
+        latestLog.log,
+        BigInt(Math.floor(Date.now() / 1000)), // current timestamp
+        BigInt(publicClient.chain.id)
+      );
     } catch (error) {
       console.error(error);
     }
@@ -140,6 +162,9 @@ export function Counter() {
           </li>
         ))}
       </ul>
+      <button onClick={handleTestEmitRead} disabled={!state.isCounterDeployed || state.logs.length === 0}>
+        Test Emit Read
+      </button>
     </div>
   )
 }

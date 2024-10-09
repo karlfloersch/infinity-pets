@@ -9,6 +9,9 @@ contract Counter {
     event CounterDeployed(uint256 indexed magicNumber, address indexed contractAddress);
     event CounterIncremented(uint256 indexed newValue); // New event for increment
 
+    // Add custom error
+    error TestEmitReadFailed();
+
     constructor() {
         emit CounterDeployed(420, address(this));
     }
@@ -27,8 +30,11 @@ contract Counter {
         return number;
     }
 
-    function testEmitRead(ICrossL2Inbox.Identifier calldata _newGameId, bytes calldata _newGameData) external returns (uint256) {
-        ICrossL2Inbox(Predeploys.CROSS_L2_INBOX).validateMessage(_newGameId, keccak256(_newGameData));
-        return 420;
+    function testEmitRead(ICrossL2Inbox.Identifier calldata _eventId, bytes calldata _eventData) external returns (uint256) {
+        try ICrossL2Inbox(Predeploys.CROSS_L2_INBOX).validateMessage(_eventId, keccak256(_eventData)) {
+            return 420;
+        } catch {
+            revert TestEmitReadFailed();
+        }
     }
 }
