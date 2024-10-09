@@ -82,7 +82,7 @@ export function Counter() {
       await executeTransaction('Test Emit Read', testEmitRead, 
         counterAddress,
         latestLog.log,
-        BigInt(Math.floor(Date.now() / 1000)), // current timestamp
+        latestLog.timestamp, // Use the timestamp from our state
         BigInt(publicClient.chain.id)
       );
     } catch (error) {
@@ -104,14 +104,23 @@ export function Counter() {
       const unwatch = publicClient.watchContractEvent({
         address: counterAddress,
         abi: COUNTER_ABI,
-        fromBlock: 0n, // Start watching from block 0
-        onLogs: (logs: Log[]) => {
-          logs.forEach((log) => {
-            dispatch({
-              type: 'ADD_LOG',
-              payload: { log, chainId: publicClient.chain.id },
-            });
-          });
+        fromBlock: 0n,
+        onLogs: async (logs: Log[]) => {
+          for (const log of logs) {
+            if (log.blockNumber) {
+              const block = await publicClient.getBlock({ blockNumber: log.blockNumber })
+              dispatch({
+                type: 'ADD_LOG',
+                payload: { 
+                  log, 
+                  chainId: publicClient.chain.id, 
+                  timestamp: block.timestamp 
+                },
+              });
+            } else {
+              console.warn('Log received without block number:', log);
+            }
+          }
         },
       });
 
@@ -158,7 +167,8 @@ export function Counter() {
           <li key={index}>
             Chain ID: {logEntry.chainId}, 
             Block Number: {logEntry.log.blockNumber ? logEntry.log.blockNumber.toString() : 'N/A'}, 
-            Event: {logEntry.log.topics[1]}
+            Event: {logEntry.log.topics[1]},
+            Timestamp: {new Date(Number(logEntry.timestamp) * 1000).toLocaleString()}
           </li>
         ))}
       </ul>
