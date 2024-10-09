@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import { Log } from 'viem';
 
-// Define the state shape
+// Update the state shape
 interface CounterState {
   isCounterDeployed: boolean;
   counterValue: string;
@@ -9,6 +10,7 @@ interface CounterState {
     currentTransaction: string | null;
     error: string | null;
   };
+  logs: Array<{ log: Log; chainId: number }>; // New property
 }
 
 // Define action types
@@ -16,7 +18,8 @@ type Action =
   | { type: 'SET_COUNTER_DEPLOYED'; payload: boolean }
   | { type: 'SET_COUNTER_VALUE'; payload: string }
   | { type: 'START_TRANSACTION'; payload: { name: string } }
-  | { type: 'END_TRANSACTION'; payload: { name: string; success: boolean; error?: string } };
+  | { type: 'END_TRANSACTION'; payload: { name: string; success: boolean; error?: string } }
+  | { type: 'ADD_LOG'; payload: { log: Log; chainId: number } }; // New action
 
 // Initial state
 const initialState: CounterState = {
@@ -27,6 +30,7 @@ const initialState: CounterState = {
     currentTransaction: null,
     error: null,
   },
+  logs: [], // Initialize logs array
 };
 
 // Reducer function
@@ -53,6 +57,11 @@ function counterReducer(state: CounterState, action: Action): CounterState {
           currentTransaction: null,
           error: action.payload.success ? null : action.payload.error || 'Unknown error',
         },
+      };
+    case 'ADD_LOG':
+      return {
+        ...state,
+        logs: [...state.logs, action.payload],
       };
     default:
       return state;

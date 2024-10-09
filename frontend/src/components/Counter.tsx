@@ -6,10 +6,11 @@ import {
   isCounterContractDeployed,
   getCounterAddress
 } from '../contractInteractions'
-import { INITIAL_CHAIN_ID } from '../constants'
+import { INITIAL_CHAIN_ID, publicClient, COUNTER_ABI } from '../constants'
 import { account } from '../wallet'
 import { useCounterState } from '../state/CounterState'
 import { useTransaction } from '../hooks/useTransaction'
+import { Log } from 'viem'
 
 const Popup = ({ message, isSuccess }: { message: string; isSuccess: boolean }) => (
   <div style={{
@@ -75,6 +76,33 @@ export function Counter() {
     return () => clearInterval(valueInterval);
   }, [checkCounterDeployment, fetchCounterValue]);
 
+  useEffect(() => {
+    const watchLogs = async () => {
+      const counterAddress = getCounterAddress();
+      const unwatch = publicClient.watchContractEvent({
+        address: counterAddress,
+        abi: COUNTER_ABI,
+        fromBlock: 0n, // Start watching from block 0
+        onLogs: (logs: Log[]) => {
+          logs.forEach((log) => {
+            dispatch({
+              type: 'ADD_LOG',
+              payload: { log, chainId: publicClient.chain.id },
+            });
+          });
+        },
+      });
+
+      return () => {
+        unwatch();
+      };
+    };
+
+    if (state.isCounterDeployed) {
+      watchLogs();
+    }
+  }, [state.isCounterDeployed, dispatch]);
+
   return (
     <div>
       <h2>Counter Contract</h2>
@@ -102,6 +130,16 @@ export function Counter() {
       {state.transactionStatus.error && (
         <Popup message={state.transactionStatus.error} isSuccess={false} />
       )}
+      <h3>Logs:</h3>
+      <ul>
+        {state.logs.map((logEntry, index) => (
+          <li key={index}>
+            Chain ID: {logEntry.chainId}, 
+            Block Number: {logEntry.log.blockNumber ? logEntry.log.blockNumber.toString() : 'N/A'}, 
+            Event: {logEntry.log.topics[1]}
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

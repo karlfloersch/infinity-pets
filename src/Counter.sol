@@ -7,6 +7,7 @@ import { ICrossL2Inbox } from "@contracts-bedrock/L2/interfaces/ICrossL2Inbox.so
 contract Counter {
     uint256 public number;
     event CounterDeployed(uint256 indexed magicNumber, address indexed contractAddress);
+    event CounterIncremented(uint256 indexed newValue); // New event for increment
 
     constructor() {
         emit CounterDeployed(420, address(this));
@@ -18,6 +19,7 @@ contract Counter {
 
     function increment() public {
         number++;
+        emit CounterIncremented(number); // Emit the event with the new counter value
     }
 
     // Add getValue function
