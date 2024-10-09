@@ -1,6 +1,13 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { Log } from 'viem';
 
+// Define the EventEntry type
+export type EventEntry = {
+  log: Log;
+  chainId: number;
+  timestamp: bigint;
+};
+
 // Update the state shape
 interface CounterState {
   isCounterDeployed: boolean;
@@ -10,7 +17,7 @@ interface CounterState {
     currentTransaction: string | null;
     error: string | null;
   };
-  logs: Array<{ log: Log; chainId: number; timestamp: bigint }>; // New property
+  events: EventEntry[]; // Changed from logs to events
 }
 
 // Define action types
@@ -19,7 +26,7 @@ type Action =
   | { type: 'SET_COUNTER_VALUE'; payload: string }
   | { type: 'START_TRANSACTION'; payload: { name: string } }
   | { type: 'END_TRANSACTION'; payload: { name: string; success: boolean; error?: string } }
-  | { type: 'ADD_LOG'; payload: { log: Log; chainId: number; timestamp: bigint } }; // New action
+  | { type: 'ADD_EVENT'; payload: EventEntry }; // Changed from ADD_LOG to ADD_EVENT
 
 // Initial state
 const initialState: CounterState = {
@@ -30,7 +37,7 @@ const initialState: CounterState = {
     currentTransaction: null,
     error: null,
   },
-  logs: [], // Initialize logs array
+  events: [], // Changed from logs to events
 };
 
 // Reducer function
@@ -58,10 +65,10 @@ function counterReducer(state: CounterState, action: Action): CounterState {
           error: action.payload.success ? null : action.payload.error || 'Unknown error',
         },
       };
-    case 'ADD_LOG':
+    case 'ADD_EVENT': // Changed from ADD_LOG to ADD_EVENT
       return {
         ...state,
-        logs: [...state.logs, action.payload],
+        events: [...state.events, action.payload], // Changed from logs to events
       };
     default:
       return state;

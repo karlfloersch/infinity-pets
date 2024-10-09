@@ -2,6 +2,7 @@ import { keccak256, toHex, TransactionReceipt, getCreate2Address, concat } from 
 import { publicClient, walletClient, CREATE2_FACTORY_ADDRESS, COUNTER_ABI, COUNTER_BYTECODE } from './constants'
 import { account } from './wallet'
 import type { Address } from 'viem'
+import { EventEntry } from './state/CounterState' // Import the EventEntry type
 
 // Helper function to wait for transaction receipt
 async function waitForReceipt(hash: `0x${string}`): Promise<TransactionReceipt> {
@@ -126,25 +127,17 @@ export function getCounterAddress(): Address {
 
 export async function testEmitRead(
   counterAddress: Address,
-  log: { 
-    address: Address, 
-    blockNumber: bigint, 
-    logIndex: number, 
-    topics: `0x${string}`[], 
-    data: `0x${string}` 
-  },
-  timestamp: bigint,
-  chainId: bigint
+  eventEntry: EventEntry
 ): Promise<TransactionReceipt> {
   const eventId = {
-    origin: log.address,
-    blockNumber: log.blockNumber,
-    logIndex: BigInt(log.logIndex),
-    timestamp,
-    chainId
+    origin: eventEntry.log.address,
+    blockNumber: eventEntry.log.blockNumber,
+    logIndex: BigInt(eventEntry.log.logIndex ?? 0), // Add null check and default to 0
+    timestamp: eventEntry.timestamp,
+    chainId: BigInt(eventEntry.chainId)
   }
 
-  const eventData = concat([...log.topics, log.data])
+  const eventData = concat([...eventEntry.log.topics, eventEntry.log.data])
 
   console.debug('Calling testEmitRead with:', { eventId, eventData })
 

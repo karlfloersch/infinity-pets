@@ -9,7 +9,7 @@ import {
 } from '../contractInteractions'
 import { INITIAL_CHAIN_ID, publicClient, COUNTER_ABI } from '../constants'
 import { account } from '../wallet'
-import { useCounterState } from '../state/CounterState'
+import { useCounterState, EventEntry } from '../state/CounterState'
 import { useTransaction } from '../hooks/useTransaction'
 import { Log } from 'viem'
 
@@ -70,20 +70,18 @@ export function Counter() {
   }
 
   const handleTestEmitRead = async () => {
-    if (state.logs.length === 0) {
-      console.error('No logs available to test');
+    if (state.events.length === 0) { // Changed from logs to events
+      console.error('No events available to test');
       return;
     }
 
-    const latestLog = state.logs[state.logs.length - 1];
+    const latestEvent = state.events[state.events.length - 1]; // Changed from logs to events
     const counterAddress = getCounterAddress();
 
     try {
       await executeTransaction('Test Emit Read', testEmitRead, 
         counterAddress,
-        latestLog.log,
-        latestLog.timestamp, // Use the timestamp from our state
-        BigInt(publicClient.chain.id)
+        latestEvent
       );
     } catch (error) {
       console.error(error);
@@ -99,7 +97,7 @@ export function Counter() {
   }, [checkCounterDeployment, fetchCounterValue]);
 
   useEffect(() => {
-    const watchLogs = async () => {
+    const watchEvents = async () => { // Changed from watchLogs to watchEvents
       const counterAddress = getCounterAddress();
       const unwatch = publicClient.watchContractEvent({
         address: counterAddress,
@@ -109,16 +107,17 @@ export function Counter() {
           for (const log of logs) {
             if (log.blockNumber) {
               const block = await publicClient.getBlock({ blockNumber: log.blockNumber })
+              const eventEntry: EventEntry = {
+                log,
+                chainId: publicClient.chain.id,
+                timestamp: block.timestamp
+              };
               dispatch({
-                type: 'ADD_LOG',
-                payload: { 
-                  log, 
-                  chainId: publicClient.chain.id, 
-                  timestamp: block.timestamp 
-                },
+                type: 'ADD_EVENT', // Changed from ADD_LOG to ADD_EVENT
+                payload: eventEntry
               });
             } else {
-              console.warn('Log received without block number:', log);
+              console.warn('Event received without block number:', log);
             }
           }
         },
@@ -130,7 +129,7 @@ export function Counter() {
     };
 
     if (state.isCounterDeployed) {
-      watchLogs();
+      watchEvents(); // Changed from watchLogs to watchEvents
     }
   }, [state.isCounterDeployed, dispatch]);
 
@@ -161,18 +160,21 @@ export function Counter() {
       {state.transactionStatus.error && (
         <Popup message={state.transactionStatus.error} isSuccess={false} />
       )}
-      <h3>Logs:</h3>
+      <h3>Events:</h3>
       <ul>
-        {state.logs.map((logEntry, index) => (
+        {state.events.map((eventEntry, index) => ( // Changed from logs to events
           <li key={index}>
-            Chain ID: {logEntry.chainId}, 
-            Block Number: {logEntry.log.blockNumber ? logEntry.log.blockNumber.toString() : 'N/A'}, 
-            Event: {logEntry.log.topics[1]},
-            Timestamp: {new Date(Number(logEntry.timestamp) * 1000).toLocaleString()}
+            Chain ID: {eventEntry.chainId}, 
+            Block Number: {eventEntry.log.blockNumber ? eventEntry.log.blockNumber.toString() : 'N/A'}, 
+            Event: {eventEntry.log.topics[1]},
+            Timestamp: {new Date(Number(eventEntry.timestamp) * 1000).toLocaleString()}
           </li>
         ))}
       </ul>
-      <button onClick={handleTestEmitRead} disabled={!state.isCounterDeployed || state.logs.length === 0}>
+      <button 
+        onClick={handleTestEmitRead} 
+        disabled={!state.isCounterDeployed || state.events.length === 0}
+      >
         Test Emit Read
       </button>
     </div>
