@@ -2,11 +2,10 @@ import { useEffect, useCallback } from 'react'
 import {
   deployCounterContract,
   incrementCounter,
-  getCounterValue,
-  isCounterContractDeployed,
   getCounterAddress,
   testEmitRead
 } from '../contractInteractions'
+import { getCounterContract } from '../contractFactory'
 import { INITIAL_CHAIN_ID, publicClient, COUNTER_ABI } from '../constants'
 import { account } from '../wallet'
 import { useCounterState, EventEntry } from '../state/CounterState'
@@ -33,22 +32,23 @@ const Popup = ({ message, isSuccess }: { message: string; isSuccess: boolean }) 
 export function Counter() {
   const { state, dispatch } = useCounterState();
   const { executeTransaction } = useTransaction();
+  const { contract, isDeployed } = getCounterContract(INITIAL_CHAIN_ID);
 
   const fetchCounterValue = useCallback(async () => {
     if (state.isCounterDeployed) {
       try {
-        const value = await getCounterValue(getCounterAddress());
+        const value = await contract.read.getValue() as bigint;
         dispatch({ type: 'SET_COUNTER_VALUE', payload: value.toString() });
       } catch (error) {
         console.error('Error fetching counter value:', error);
       }
     }
-  }, [state.isCounterDeployed, dispatch]);
+  }, [state.isCounterDeployed, dispatch, contract]);
 
   const checkCounterDeployment = useCallback(async () => {
-    const isDeployed = await isCounterContractDeployed();
-    dispatch({ type: 'SET_COUNTER_DEPLOYED', payload: isDeployed });
-  }, [dispatch]);
+    const deployed = await isDeployed();
+    dispatch({ type: 'SET_COUNTER_DEPLOYED', payload: deployed });
+  }, [dispatch, isDeployed]);
 
   const handleDeploy = async () => {
     try {
