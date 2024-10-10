@@ -1,10 +1,10 @@
-import { createPublicClient, createWalletClient, http, getContract, Address, TransactionReceipt, GetContractReturnType, PublicClient } from 'viem'
-import { account } from './wallet'
-import { COUNTER_ABI, COUNTER_BYTECODE, INITIAL_CHAIN_ID } from './constants'
+import { getContract, Address, TransactionReceipt, GetContractReturnType } from 'viem'
+import { COUNTER_ABI, COUNTER_BYTECODE } from './constants'
 import { deployCreate2Contract, isContractDeployed, computeContractAddress, getCounterSalt } from './contractInteractions'
+import { getClient } from './wallet'
 
 interface ContractWrapper {
-  contract: GetContractReturnType<typeof COUNTER_ABI, PublicClient, Address>
+  contract: GetContractReturnType<typeof COUNTER_ABI>
   deploy: () => Promise<{ contractAddress: Address; receipt: TransactionReceipt }>
   isDeployed: () => Promise<boolean>
 }
@@ -15,39 +15,12 @@ const contractAddress = computeContractAddress(COUNTER_BYTECODE as `0x${string}`
 
 const contractCache: { [chainId: number]: ContractWrapper } = {}
 
-
 export function getCounterContract(chainId: number): ContractWrapper {
   if (contractCache[chainId]) {
     return contractCache[chainId]
   }
 
-  const rpcUrl = `http://localhost:${9545 + chainId - INITIAL_CHAIN_ID}`
-  
-  const customChain = {
-    id: chainId,
-    name: `Localhost ${chainId}`,
-    network: `localhost-${chainId}`,
-    nativeCurrency: {
-      name: 'Ether',
-      symbol: 'ETH',
-      decimals: 18,
-    },
-    rpcUrls: {
-      default: { http: [rpcUrl] },
-      public: { http: [rpcUrl] },
-    },
-  }
-
-  const publicClient = createPublicClient({
-    chain: customChain,
-    transport: http(rpcUrl)
-  })
-
-  const walletClient = createWalletClient({
-    account,
-    chain: customChain,
-    transport: http(rpcUrl)
-  })
+  const { publicClient, walletClient } = getClient(chainId)
 
   const contract = getContract({
     address: contractAddress,

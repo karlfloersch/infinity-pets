@@ -1,16 +1,16 @@
 import { useEffect, useCallback } from 'react'
 import {
   deployCounterContract,
-  incrementCounter,
   getCounterAddress,
-  testEmitRead
+  testEmitRead,
+  watchCounterEvents,
+  incrementCounter
 } from '../contractInteractions'
 import { getCounterContract } from '../contractFactory'
-import { INITIAL_CHAIN_ID, publicClient, COUNTER_ABI } from '../constants'
+import { INITIAL_CHAIN_ID } from '../constants'
 import { account } from '../wallet'
 import { useCounterState, EventEntry } from '../state/CounterState'
 import { useTransaction } from '../hooks/useTransaction'
-import { Log } from 'viem'
 
 const Popup = ({ message, isSuccess }: { message: string; isSuccess: boolean }) => (
   <div style={{
@@ -97,30 +97,12 @@ export function Counter() {
   }, [checkCounterDeployment, fetchCounterValue]);
 
   useEffect(() => {
-    const watchEvents = async () => { // Changed from watchLogs to watchEvents
-      const counterAddress = getCounterAddress();
-      const unwatch = publicClient.watchContractEvent({
-        address: counterAddress,
-        abi: COUNTER_ABI,
-        fromBlock: 0n,
-        onLogs: async (logs: Log[]) => {
-          for (const log of logs) {
-            if (log.blockNumber) {
-              const block = await publicClient.getBlock({ blockNumber: log.blockNumber })
-              const eventEntry: EventEntry = {
-                log,
-                chainId: publicClient.chain.id,
-                timestamp: block.timestamp
-              };
-              dispatch({
-                type: 'ADD_EVENT', // Changed from ADD_LOG to ADD_EVENT
-                payload: eventEntry
-              });
-            } else {
-              console.warn('Event received without block number:', log);
-            }
-          }
-        },
+    const watchEvents = async () => {
+      const unwatch = watchCounterEvents(INITIAL_CHAIN_ID, (eventEntry: EventEntry) => {
+        dispatch({
+          type: 'ADD_EVENT',
+          payload: eventEntry
+        });
       });
 
       return () => {
@@ -129,7 +111,7 @@ export function Counter() {
     };
 
     if (state.isCounterDeployed) {
-      watchEvents(); // Changed from watchLogs to watchEvents
+      watchEvents();
     }
   }, [state.isCounterDeployed, dispatch]);
 

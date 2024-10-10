@@ -1,8 +1,9 @@
 import { keccak256, toHex, TransactionReceipt, getCreate2Address, concat } from 'viem'
 import { publicClient, walletClient, CREATE2_FACTORY_ADDRESS, COUNTER_ABI, COUNTER_BYTECODE } from './constants'
-import { account } from './wallet'
+import { account, getClient } from './wallet'
 import type { Address } from 'viem'
 import { EventEntry } from './state/CounterState' // Import the EventEntry type
+import { Log } from 'viem'
 
 // Helper function to wait for transaction receipt
 async function waitForReceipt(hash: `0x${string}`): Promise<TransactionReceipt> {
@@ -156,4 +157,36 @@ export async function testEmitRead(
   console.debug('testEmitRead transaction receipt:', receipt)
 
   return receipt
+}
+
+// New function to watch for counter events
+export function watchCounterEvents(
+  chainId: number,
+  onEvent: (eventEntry: EventEntry) => void
+): () => void {
+  const { publicClient } = getClient(chainId)
+  const counterAddress = getCounterAddress()
+
+  const unwatch = publicClient.watchContractEvent({
+    address: counterAddress,
+    abi: COUNTER_ABI,
+    fromBlock: 0n,
+    onLogs: async (logs: Log[]) => {
+      for (const log of logs) {
+        if (log.blockNumber) {
+          const block = await publicClient.getBlock({ blockNumber: log.blockNumber })
+          const eventEntry: EventEntry = {
+            log,
+            chainId: publicClient.chain?.id ?? 0,
+            timestamp: block.timestamp
+          };
+          onEvent(eventEntry);
+        } else {
+          console.warn('Event received without block number:', log);
+        }
+      }
+    },
+  });
+
+  return unwatch;
 }
