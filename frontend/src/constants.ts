@@ -1,4 +1,4 @@
-import { createPublicClient, createWalletClient, http } from 'viem'
+import { createPublicClient, createWalletClient, http, Abi } from 'viem'
 import { account } from './contract-interactions/wallet'
 
 // Existing constants
@@ -10,8 +10,8 @@ export const INITIAL_CHAIN_ID = 901
 export const INITIAL_RPC_URL = 'http://localhost:9545'
 
 // Counter contract constants
-export const COUNTER_ABI = counterAbi
-export const COUNTER_BYTECODE = counterBytecode.object
+export const COUNTER_ABI: Abi = counterAbi as Abi
+export const COUNTER_BYTECODE = counterBytecode.object as `0x${string}`
 
 // Custom chain configuration
 export const customChain = {

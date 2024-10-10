@@ -1,30 +1,35 @@
-import { getContract, Address, TransactionReceipt, GetContractReturnType } from 'viem'
-import { COUNTER_ABI, COUNTER_BYTECODE } from '../constants'
-import { deployCreate2Contract, isContractDeployed, computeContractAddress, getCounterSalt } from './contractInteractions'
+import { getContract, Address, TransactionReceipt, Abi, keccak256, toHex } from 'viem'
+import { deployCreate2Contract, isContractDeployed, computeContractAddress } from './contractInteractions'
 import { getClient } from './wallet'
 
 interface ContractWrapper {
-  contract: GetContractReturnType<typeof COUNTER_ABI>
+  contract: any
   deploy: () => Promise<{ contractAddress: Address; receipt: TransactionReceipt }>
   isDeployed: () => Promise<boolean>
 }
 
-// Use the same salt for all chains
-const saltHex = getCounterSalt()
-const contractAddress = computeContractAddress(COUNTER_BYTECODE as `0x${string}`, saltHex)
+const defaultSalt = '0x' + keccak256(toHex('my_salt')).slice(2, 34).padStart(64, '0') as `0x${string}`
 
-const contractCache: { [chainId: number]: ContractWrapper } = {}
+const contractCache: { [key: string]: ContractWrapper } = {}
 
-export function getCounterContract(chainId: number): ContractWrapper {
-  if (contractCache[chainId]) {
-    return contractCache[chainId]
+export function getXContract(
+  chainId: number,
+  abi: Abi,
+  bytecode: `0x${string}`,
+  salt: `0x${string}` = defaultSalt
+): ContractWrapper {
+  const contractAddress = computeContractAddress(bytecode, salt)
+  const cacheKey = `${chainId}-${contractAddress}`
+
+  if (contractCache[cacheKey]) {
+    return contractCache[cacheKey]
   }
 
   const { publicClient, walletClient } = getClient(chainId)
 
   const contract = getContract({
     address: contractAddress,
-    abi: COUNTER_ABI,
+    abi,
     client: {
       public: publicClient,
       wallet: walletClient
@@ -33,10 +38,10 @@ export function getCounterContract(chainId: number): ContractWrapper {
 
   const wrapper: ContractWrapper = {
     contract,
-    deploy: async () => deployCreate2Contract(COUNTER_BYTECODE as `0x${string}`, saltHex),
+    deploy: async () => deployCreate2Contract(bytecode, salt),
     isDeployed: async () => isContractDeployed(contractAddress),
   }
 
-  contractCache[chainId] = wrapper
+  contractCache[cacheKey] = wrapper
   return wrapper
 }

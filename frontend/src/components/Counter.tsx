@@ -6,11 +6,12 @@ import {
   watchCounterEvents,
   incrementCounter
 } from '../contract-interactions/contractInteractions'
-import { getCounterContract } from '../contract-interactions/contractFactory'
+import { getXContract } from '../contract-interactions/contractFactory'
 import { INITIAL_CHAIN_ID } from '../constants'
 import { account } from '../contract-interactions/wallet'
 import { useCounterState, EventEntry } from '../state/CounterState'
 import { useTransaction } from '../hooks/useTransaction'
+import { COUNTER_ABI, COUNTER_BYTECODE } from '../constants'
 
 const Popup = ({ message, isSuccess }: { message: string; isSuccess: boolean }) => (
   <div style={{
@@ -32,7 +33,7 @@ const Popup = ({ message, isSuccess }: { message: string; isSuccess: boolean }) 
 export function Counter() {
   const { state, dispatch } = useCounterState();
   const { executeTransaction } = useTransaction();
-  const { contract, isDeployed } = getCounterContract(INITIAL_CHAIN_ID);
+  const { contract, isDeployed } = getXContract(INITIAL_CHAIN_ID, COUNTER_ABI, COUNTER_BYTECODE);
 
   const fetchCounterValue = useCallback(async () => {
     if (state.isCounterDeployed) {
