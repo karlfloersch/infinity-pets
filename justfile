@@ -12,6 +12,10 @@ build-contracts:
 serve-frontend:
     cd frontend && npm run dev
 
+# Build supersim
+build-supersim:
+    cd supersim && go build -o supersim cmd/main.go
+
 # Run supersim
 run-supersim:
     ./supersim/supersim
