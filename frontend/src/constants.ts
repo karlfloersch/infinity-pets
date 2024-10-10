@@ -1,5 +1,5 @@
 import { createPublicClient, createWalletClient, http } from 'viem'
-import { account } from './wallet'
+import { account } from './contract-interactions/wallet'
 
 // Existing constants
 import { abi as counterAbi, bytecode as counterBytecode } from '../../out/Counter.sol/Counter.json'

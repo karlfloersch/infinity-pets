@@ -1,5 +1,5 @@
 import { getContract, Address, TransactionReceipt, GetContractReturnType } from 'viem'
-import { COUNTER_ABI, COUNTER_BYTECODE } from './constants'
+import { COUNTER_ABI, COUNTER_BYTECODE } from '../constants'
 import { deployCreate2Contract, isContractDeployed, computeContractAddress, getCounterSalt } from './contractInteractions'
 import { getClient } from './wallet'
 

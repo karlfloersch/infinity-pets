@@ -1,8 +1,8 @@
 import { keccak256, toHex, TransactionReceipt, getCreate2Address, concat } from 'viem'
-import { publicClient, walletClient, CREATE2_FACTORY_ADDRESS, COUNTER_ABI, COUNTER_BYTECODE } from './constants'
+import { publicClient, walletClient, CREATE2_FACTORY_ADDRESS, COUNTER_ABI, COUNTER_BYTECODE } from '../constants'
 import { account, getClient } from './wallet'
 import type { Address } from 'viem'
-import { EventEntry } from './state/CounterState' // Import the EventEntry type
+import { EventEntry } from '../state/CounterState' // Import the EventEntry type
 import { Log } from 'viem'
 
 // Helper function to wait for transaction receipt

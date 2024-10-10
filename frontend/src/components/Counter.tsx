@@ -5,10 +5,10 @@ import {
   testEmitRead,
   watchCounterEvents,
   incrementCounter
-} from '../contractInteractions'
-import { getCounterContract } from '../contractFactory'
+} from '../contract-interactions/contractInteractions'
+import { getCounterContract } from '../contract-interactions/contractFactory'
 import { INITIAL_CHAIN_ID } from '../constants'
-import { account } from '../wallet'
+import { account } from '../contract-interactions/wallet'
 import { useCounterState, EventEntry } from '../state/CounterState'
 import { useTransaction } from '../hooks/useTransaction'
 

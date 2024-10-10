@@ -1,7 +1,7 @@
 import { privateKeyToAccount } from 'viem/accounts'
 import { createPublicClient, createWalletClient, http, PublicClient, WalletClient } from 'viem'
 
-import { INITIAL_CHAIN_ID } from './constants'
+import { INITIAL_CHAIN_ID } from '../constants'
 
 // Default private key for the embedded wallet, using a testnet account
 const DEFAULT_PRIVATE_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
