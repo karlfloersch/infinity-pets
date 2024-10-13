@@ -41,17 +41,15 @@ contract Counter is SuperchainEnabled {
 
     /// @notice Sends a cross-chain message to increment the counter on another chain
     /// @param destChainId The destination chain ID
-    /// @param destAddress The destination contract address
-    function sendIncrementToChain(uint256 destChainId, address destAddress) external {
+    function sendIncrementToChain(uint256 destChainId) external {
         // Encode the function call to 'crossChainIncrement()' on the destination contract
         bytes memory data = abi.encodeWithSelector(this.crossChainIncrement.selector);
-        sendXMessage(destChainId, destAddress, data);
+        sendXSelf(destChainId, data);
     }
 
     /// @notice Handles incoming cross-chain messages to increment the counter
-    function crossChainIncrement() external onlyXAddress(address(this)) {
-        // Increment the counter as a result of a validated cross-chain message
-        number++;
+    function crossChainIncrement() external onlyXSelf {
+        number += 10;
         emit CounterIncremented(number);
     }
 }

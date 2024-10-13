@@ -67,4 +67,10 @@ export class CounterContract {
       onEvent(eventEntry);
     });
   }
+
+  // Function to send increment to another chain
+  async sendIncrementToChain(destChainId: number): Promise<TransactionReceipt> {
+    console.debug('Sending increment to chain:', destChainId)
+    return this.counterContract.sendTx('sendIncrementToChain', [destChainId])
+  }
 }

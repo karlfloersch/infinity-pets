@@ -9,10 +9,11 @@ export function Counter({ chainId }: { chainId: number }) {
   const { state, dispatch } = useCounterState();
   const { executeTransaction } = useTransaction();
   const [counterContract, setCounterContract] = useState<CounterContract | null>(null);
+  const [destChainId, setDestChainId] = useState<string>('');
 
   useEffect(() => {
     setCounterContract(new CounterContract(chainId));
-  }, []);
+  }, [chainId]);
 
   const fetchCounterValue = useCallback(async () => {
     if (state.isCounterDeployed && counterContract) {
@@ -52,6 +53,17 @@ export function Counter({ chainId }: { chainId: number }) {
         await counterContract.incrementCounter();
       });
       await fetchCounterValue();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const handleCrossChainIncrement = async () => {
+    if (!counterContract || !destChainId) return;
+    try {
+      await executeTransaction('Cross-Chain Increment', async () => {
+        await counterContract.sendIncrementToChain(parseInt(destChainId));
+      });
     } catch (error) {
       console.error(error);
     }
@@ -114,6 +126,20 @@ export function Counter({ chainId }: { chainId: number }) {
           >
             {state.transactionStatus.isProcessing ? 'Incrementing...' : 'Increment Counter'}
           </button>
+          <div>
+            <input
+              type="number"
+              value={destChainId}
+              onChange={(e) => setDestChainId(e.target.value)}
+              placeholder="Destination Chain ID"
+            />
+            <button
+              onClick={handleCrossChainIncrement}
+              disabled={!state.isCounterDeployed || state.transactionStatus.isProcessing || !destChainId}
+            >
+              {state.transactionStatus.isProcessing ? 'Processing...' : 'Cross-Chain Increment'}
+            </button>
+          </div>
         </>
       )}
       <p>Current Chain ID: {chainId}</p>
