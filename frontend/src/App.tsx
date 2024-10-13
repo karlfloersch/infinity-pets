@@ -1,13 +1,10 @@
-import { Counter } from './components/Counter';
-import { CounterProvider } from './state/CounterState';
+import { ChainSelector } from './components/ChainSelector';
 
 function App() {
   return (
-    <CounterProvider>
-      <div className="App">
-        <Counter />
-      </div>
-    </CounterProvider>
+    <div className="App">
+      <ChainSelector />
+    </div>
   );
 }
 

@@ -1,6 +1,5 @@
 import { useEffect, useCallback, useState } from 'react'
 import { CounterContract } from '../contract-interactions/counter/contractInteractions'
-import { INITIAL_CHAIN_ID } from '../constants'
 import { account } from '../contract-interactions/wallet'
 import { useCounterState, EventEntry } from '../state/CounterState'
 import { useTransaction } from '../hooks/useTransaction'
@@ -22,13 +21,13 @@ const Popup = ({ message, isSuccess }: { message: string; isSuccess: boolean }) 
   </div>
 )
 
-export function Counter() {
+export function Counter({ chainId }: { chainId: number }) {
   const { state, dispatch } = useCounterState();
   const { executeTransaction } = useTransaction();
   const [counterContract, setCounterContract] = useState<CounterContract | null>(null);
 
   useEffect(() => {
-    setCounterContract(new CounterContract(INITIAL_CHAIN_ID));
+    setCounterContract(new CounterContract(chainId));
   }, []);
 
   const fetchCounterValue = useCallback(async () => {
@@ -133,7 +132,7 @@ export function Counter() {
           </button>
         </>
       )}
-      <p>Current Chain ID: {INITIAL_CHAIN_ID}</p>
+      <p>Current Chain ID: {chainId}</p>
       <p>Current Account: {account.address}</p>
       {state.transactionStatus.isProcessing && (
         <Popup message={`Processing ${state.transactionStatus.currentTransaction}...`} isSuccess={false} />

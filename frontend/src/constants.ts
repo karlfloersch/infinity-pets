@@ -9,6 +9,9 @@ export const CREATE2_FACTORY_ADDRESS = '0x4e59b44847b379578588920cA78FbF26c0B495
 export const INITIAL_CHAIN_ID = 901
 export const INITIAL_RPC_URL = 'http://localhost:9545'
 
+// New constant for CHAIN_IDS
+export const CHAIN_IDS = Array.from({ length: 5 }, (_, i) => INITIAL_CHAIN_ID + i)
+
 // Counter contract constants
 export const COUNTER_ABI: Abi = counterAbi as Abi
 export const COUNTER_BYTECODE = counterBytecode.object as `0x${string}`
