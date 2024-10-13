@@ -16,7 +16,7 @@ abstract contract SuperchainEnabled {
     /// @param destChainId The chain ID of the destination chain
     /// @param destAddress The address of the destination contract
     /// @param data The calldata to send to the destination contract
-    function sendXMessage(
+    function _xMessageContract(
         uint256 destChainId,
         address destAddress,
         bytes memory data
@@ -26,7 +26,16 @@ abstract contract SuperchainEnabled {
             destAddress,
             data
         );
-        // No need to emit an event here, as L2ToL2CrossDomainMessenger already emits a SentMessage event
+    }
+
+    /// @notice Sends a cross-chain message to this contract on another chain
+    /// @param destChainId The chain ID of the destination chain
+    /// @param data The calldata to send to this contract on the destination chain
+    function _xMessageSelf(
+        uint256 destChainId,
+        bytes memory data
+    ) internal {
+        _xMessageContract(destChainId, address(this), data);
     }
 
     /// @notice Checks if the cross-domain message is from the expected source
@@ -41,7 +50,7 @@ abstract contract SuperchainEnabled {
 
     /// @notice Modifier to validate messages from a specific address
     /// @param expectedSource The expected source address
-    modifier onlyXAddress(address expectedSource) {
+    modifier xOnlyFromAddress(address expectedSource) {
         if (!_isValidCrossDomainSender(expectedSource)) {
             revert InvalidCrossDomainSender();
         }
@@ -49,7 +58,7 @@ abstract contract SuperchainEnabled {
     }
 
     /// @notice Modifier to validate messages from this contract itself
-    modifier onlyXSelf() {
+    modifier xOnlyFromSelf() {
         if (!_isValidCrossDomainSender(address(this))) {
             revert InvalidCrossDomainSender();
         }
@@ -59,7 +68,7 @@ abstract contract SuperchainEnabled {
     /// @notice Modifier to validate messages from a specific address on a specific chain
     /// @param expectedSource The expected source address
     /// @param expectedChainId The expected source chain ID
-    modifier onlyXContract(address expectedSource, uint256 expectedChainId) {
+    modifier xOnlyFromContract(address expectedSource, uint256 expectedChainId) {
         if (msg.sender != Predeploys.L2_TO_L2_CROSS_DOMAIN_MESSENGER) {
             revert CallerNotL2ToL2CrossDomainMessenger();
         }
@@ -70,15 +79,5 @@ abstract contract SuperchainEnabled {
             revert InvalidSourceChain();
         }
         _;
-    }
-
-    /// @notice Sends a cross-chain message to this contract on another chain
-    /// @param destChainId The chain ID of the destination chain
-    /// @param data The calldata to send to the destination contract
-    function sendXSelf(
-        uint256 destChainId,
-        bytes memory data
-    ) internal {
-        sendXMessage(destChainId, address(this), data);
     }
 }
