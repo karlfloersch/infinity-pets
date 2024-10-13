@@ -3,23 +3,7 @@ import { CounterContract } from '../contract-interactions/counter/counterContrac
 import { account } from '../contract-interactions/wallet'
 import { useCounterState, EventEntry } from '../state/CounterState'
 import { useTransaction } from '../hooks/useTransaction'
-
-const Popup = ({ message, isSuccess }: { message: string; isSuccess: boolean }) => (
-  <div style={{
-    position: 'fixed',
-    bottom: '20px',
-    right: '20px',
-    backgroundColor: 'white',
-    padding: '10px',
-    borderRadius: '5px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px'
-  }}>
-    {isSuccess ? '✅' : '⏳'} {message}
-  </div>
-)
+import { Popup } from './Popup';
 
 export function Counter({ chainId }: { chainId: number }) {
   const { state, dispatch } = useCounterState();
