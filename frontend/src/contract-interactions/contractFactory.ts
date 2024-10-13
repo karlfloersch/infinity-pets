@@ -22,9 +22,6 @@ interface ContractWrapper {
 // Default salt value
 const defaultSalt = '0x' + keccak256(toHex('my_salt')).slice(2, 34).padStart(64, '0') as `0x${string}`
 
-// Contract cache to avoid redundant instances
-const contractCache: { [key: string]: ContractWrapper } = {}
-
 // Function to compute contract address
 export function computeXContractAddress(bytecode: `0x${string}`, saltHex: `0x${string}` = defaultSalt): Address {
   const initCodeHash = keccak256(bytecode)
@@ -182,11 +179,6 @@ export function getXContract(
   salt: `0x${string}` = defaultSalt
 ): ContractWrapper {
   const contractAddress = computeXContractAddress(bytecode, salt)
-  const cacheKey = `${chainId}-${contractAddress}`
-
-  if (contractCache[cacheKey]) {
-    return contractCache[cacheKey]
-  }
 
   const wrapper: ContractWrapper = {
     address: contractAddress,
@@ -199,6 +191,5 @@ export function getXContract(
       watchContractEvents(chainId, contractAddress, abi, fromBlock, onEvent),
   }
 
-  contractCache[cacheKey] = wrapper
   return wrapper
 }
