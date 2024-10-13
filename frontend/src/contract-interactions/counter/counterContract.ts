@@ -2,15 +2,11 @@ import { Address, TransactionReceipt, concat } from 'viem'
 import { COUNTER_ABI, COUNTER_BYTECODE } from '../../constants'
 import { getXContract } from '../contractFactory'
 import { EventEntry } from '../../state/CounterState'
-import { Log } from 'viem'
-import { getClient } from '../wallet'
 
 export class CounterContract {
   private counterContract;
-  private chainId: number;
 
   constructor(chainId: number) {
-    this.chainId = chainId;
     this.counterContract = getXContract(chainId, COUNTER_ABI, COUNTER_BYTECODE);
   }
 
@@ -62,29 +58,13 @@ export class CounterContract {
 
   // Function to watch for counter events
   watchCounterEvents(onEvent: (eventEntry: EventEntry) => void): () => void {
-    const { publicClient } = getClient(this.chainId)
-    const counterAddress = this.getCounterAddress()
-
-    const unwatch = publicClient.watchContractEvent({
-      address: counterAddress,
-      abi: COUNTER_ABI,
-      fromBlock: 0n,
-      onLogs: async (logs: Log[]) => {
-        for (const log of logs) {
-          if (log.blockNumber) {
-            const block = await publicClient.getBlock({ blockNumber: log.blockNumber })
-            const eventEntry: EventEntry = {
-              log,
-              chainId: publicClient.chain?.id ?? 0,
-              timestamp: block.timestamp
-            };
-            onEvent(eventEntry);
-          } else {
-            console.warn('Event received without block number:', log);
-          }
-        }
-      },
+    return this.counterContract.watchEvents(0n, (log, block) => {
+      const eventEntry: EventEntry = {
+        log,
+        chainId: this.counterContract.chainId,
+        timestamp: block.timestamp
+      };
+      onEvent(eventEntry);
     });
-    return unwatch;
   }
 }

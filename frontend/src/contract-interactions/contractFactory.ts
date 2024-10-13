@@ -1,10 +1,11 @@
-import { Address, TransactionReceipt, Abi, keccak256, toHex, getCreate2Address } from 'viem'
+import { Address, TransactionReceipt, Abi, keccak256, toHex, getCreate2Address, Log, Block } from 'viem'
 import { CREATE2_FACTORY_ADDRESS } from '../constants'
 import { account, getClient } from './wallet'
 
 // Updated ContractWrapper interface with address field
 interface ContractWrapper {
   address: Address
+  chainId: number
   sendTx: (
     functionName: string,
     args?: any[]
@@ -15,6 +16,7 @@ interface ContractWrapper {
   ) => Promise<any>
   deploy: () => Promise<{ contractAddress: Address; receipt: TransactionReceipt }>
   isDeployed: () => Promise<boolean>
+  watchEvents: (fromBlock: bigint, onEvent: (log: Log, block: Block) => void) => () => void
 }
 
 // Default salt value
@@ -143,6 +145,35 @@ export async function call(
   return result
 }
 
+// New function for watching events
+export function watchContractEvents(
+  chainId: number,
+  contractAddress: Address,
+  abi: Abi,
+  fromBlock: bigint,
+  onEvent: (log: Log, block: Block) => void
+): () => void {
+  const { publicClient } = getClient(chainId)
+
+  const unwatch = publicClient.watchContractEvent({
+    address: contractAddress,
+    abi,
+    onLogs: async (logs: Log[]) => {
+      for (const log of logs) {
+        if (log.blockNumber) {
+          const block = await publicClient.getBlock({ blockNumber: log.blockNumber })
+          onEvent(log, block)
+        } else {
+          console.warn('Event received without block number:', log)
+        }
+      }
+    },
+    fromBlock,
+  })
+
+  return unwatch
+}
+
 // Updated getXContract function
 export function getXContract(
   chainId: number,
@@ -157,13 +188,15 @@ export function getXContract(
     return contractCache[cacheKey]
   }
 
-  // Create the ContractWrapper without directly exposing the viem contract object
   const wrapper: ContractWrapper = {
     address: contractAddress,
+    chainId,
     sendTx: (functionName: string, args: any[] = []) => sendTx(chainId, contractAddress, abi, functionName, args),
     call: (functionName: string, args: any[] = []) => call(chainId, contractAddress, abi, functionName, args),
     deploy: () => deployXContract(chainId, bytecode, salt),
     isDeployed: () => isXContractDeployed(chainId, contractAddress),
+    watchEvents: (fromBlock: bigint, onEvent: (log: Log, block: Block) => void) => 
+      watchContractEvents(chainId, contractAddress, abi, fromBlock, onEvent),
   }
 
   contractCache[cacheKey] = wrapper
