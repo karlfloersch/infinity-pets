@@ -4,14 +4,14 @@ import {
   getCounterAddress,
   testEmitRead,
   watchCounterEvents,
-  incrementCounter
+  incrementCounter,
+  getCounterValue,
+  isCounterContractDeployed
 } from '../contract-interactions/contractInteractions'
-import { getXContract } from '../contract-interactions/contractFactory'
 import { INITIAL_CHAIN_ID } from '../constants'
 import { account } from '../contract-interactions/wallet'
 import { useCounterState, EventEntry } from '../state/CounterState'
 import { useTransaction } from '../hooks/useTransaction'
-import { COUNTER_ABI, COUNTER_BYTECODE } from '../constants'
 
 const Popup = ({ message, isSuccess }: { message: string; isSuccess: boolean }) => (
   <div style={{
@@ -33,27 +33,28 @@ const Popup = ({ message, isSuccess }: { message: string; isSuccess: boolean }) 
 export function Counter() {
   const { state, dispatch } = useCounterState();
   const { executeTransaction } = useTransaction();
-  const { contract, isDeployed } = getXContract(INITIAL_CHAIN_ID, COUNTER_ABI, COUNTER_BYTECODE);
 
   const fetchCounterValue = useCallback(async () => {
     if (state.isCounterDeployed) {
       try {
-        const value = await contract.read.getValue() as bigint;
+        const value = await getCounterValue();
         dispatch({ type: 'SET_COUNTER_VALUE', payload: value.toString() });
       } catch (error) {
         console.error('Error fetching counter value:', error);
       }
     }
-  }, [state.isCounterDeployed, dispatch, contract]);
+  }, [state.isCounterDeployed, dispatch]);
 
   const checkCounterDeployment = useCallback(async () => {
-    const deployed = await isDeployed();
+    const deployed = await isCounterContractDeployed();
     dispatch({ type: 'SET_COUNTER_DEPLOYED', payload: deployed });
-  }, [dispatch, isDeployed]);
+  }, [dispatch]);
 
   const handleDeploy = async () => {
     try {
-      await executeTransaction('Deploy Contract', deployCounterContract);
+      await executeTransaction('Deploy Contract', async () => {
+        await deployCounterContract();
+      });
       await checkCounterDeployment();
       await fetchCounterValue();
     } catch (error) {
@@ -63,7 +64,9 @@ export function Counter() {
 
   const handleIncrement = async () => {
     try {
-      await executeTransaction('Increment Counter', incrementCounter, getCounterAddress());
+      await executeTransaction('Increment Counter', async () => {
+        await incrementCounter();
+      });
       await fetchCounterValue();
     } catch (error) {
       console.error(error);
@@ -71,19 +74,17 @@ export function Counter() {
   }
 
   const handleTestEmitRead = async () => {
-    if (state.events.length === 0) { // Changed from logs to events
+    if (state.events.length === 0) {
       console.error('No events available to test');
       return;
     }
 
-    const latestEvent = state.events[state.events.length - 1]; // Changed from logs to events
-    const counterAddress = getCounterAddress();
+    const latestEvent = state.events[state.events.length - 1];
 
     try {
-      await executeTransaction('Test Emit Read', testEmitRead, 
-        counterAddress,
-        latestEvent
-      );
+      await executeTransaction('Test Emit Read', async () => {
+        await testEmitRead(getCounterAddress(), latestEvent);
+      });
     } catch (error) {
       console.error(error);
     }
@@ -145,7 +146,7 @@ export function Counter() {
       )}
       <h3>Events:</h3>
       <ul>
-        {state.events.map((eventEntry, index) => ( // Changed from logs to events
+        {state.events.map((eventEntry, index) => (
           <li key={index}>
             Chain ID: {eventEntry.chainId}, 
             Block Number: {eventEntry.log.blockNumber ? eventEntry.log.blockNumber.toString() : 'N/A'}, 

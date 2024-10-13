@@ -1,131 +1,42 @@
-import { keccak256, toHex, TransactionReceipt, getCreate2Address, concat } from 'viem'
-import { publicClient, walletClient, CREATE2_FACTORY_ADDRESS, COUNTER_ABI, COUNTER_BYTECODE } from '../constants'
-import { account, getClient } from './wallet'
-import type { Address } from 'viem'
-import { EventEntry } from '../state/CounterState' // Import the EventEntry type
+import { Address, TransactionReceipt, concat } from 'viem'
+import { COUNTER_ABI, COUNTER_BYTECODE, INITIAL_CHAIN_ID } from '../constants'
+import { getXContract } from './contractFactory'
+import { EventEntry } from '../state/CounterState'
 import { Log } from 'viem'
+import { getClient } from './wallet'
 
-// Helper function to wait for transaction receipt
-async function waitForReceipt(hash: `0x${string}`): Promise<TransactionReceipt> {
-  return publicClient.waitForTransactionReceipt({ 
-    hash,
-    pollingInterval: 100, // Poll every 100 milliseconds
-    retryDelay: 100,
-    retryCount: 100,
-  })
-}
-
-// Helper function to get the salt for the Counter contract
-export function getCounterSalt(): `0x${string}` {
-  return '0x' + keccak256(toHex('my_salt')).slice(2, 34).padStart(64, '0') as `0x${string}`
-}
-
-// Function to compute contract address
-export function computeContractAddress(bytecode: `0x${string}`, saltHex: `0x${string}`): Address {
-  const initCodeHash = keccak256(bytecode)
-  return getCreate2Address({
-    from: CREATE2_FACTORY_ADDRESS,
-    salt: saltHex,
-    bytecodeHash: initCodeHash,
-  })
-}
-
-// Generalized function to deploy a contract using the CREATE2 factory
-export async function deployCreate2Contract(
-  bytecode: `0x${string}`,
-  saltHex: `0x${string}`
-): Promise<{ contractAddress: Address; receipt: TransactionReceipt }> {
-  const data = `0x${saltHex.replace(/^0x/, '')}${bytecode.replace(/^0x/, '')}` as `0x${string}`
-
-  console.debug('Deploying contract:')
-  console.debug('From:', account.address)
-  console.debug('To (CREATE2 Factory):', CREATE2_FACTORY_ADDRESS)
-  console.debug('Salt:', saltHex)
-
-  const hash = await walletClient.sendTransaction({
-    account,
-    to: CREATE2_FACTORY_ADDRESS,
-    data: data,
-    gas: BigInt(5000000),
-  })
-
-  console.debug('Transaction sent. Hash:', hash)
-
-  const receipt = await waitForReceipt(hash)
-  console.debug('Contract deployment receipt:', {
-    transactionHash: receipt.transactionHash,
-    contractAddress: receipt.contractAddress,
-    gasUsed: receipt.gasUsed,
-    status: receipt.status
-  })
-
-  const contractAddress = computeContractAddress(bytecode, saltHex)
-  console.debug('Computed contract address:', contractAddress)
-
-  return { contractAddress, receipt }
-}
+const counterContract = getXContract(INITIAL_CHAIN_ID, COUNTER_ABI, COUNTER_BYTECODE)
 
 // Function to deploy the Counter contract
 export async function deployCounterContract(): Promise<{ contractAddress: Address; receipt: TransactionReceipt }> {
-  const saltHex = getCounterSalt()
-  console.debug('Deploying Counter contract with salt:', saltHex)
-  return deployCreate2Contract(COUNTER_BYTECODE as `0x${string}`, saltHex)
+  console.debug('Deploying Counter contract')
+  return counterContract.deploy()
 }
 
 // Function to increment the counter
-export async function incrementCounter(counterAddress: `0x${string}`): Promise<TransactionReceipt> {
-  console.debug('Incrementing counter at address:', counterAddress)
-  const { request } = await publicClient.simulateContract({
-    address: counterAddress,
-    abi: COUNTER_ABI,
-    functionName: 'increment',
-    account: account.address,
-  })
-
-  const hash = await walletClient.writeContract(request)
-  console.debug('Increment transaction sent. Hash:', hash)
-
-  const receipt = await waitForReceipt(hash)
-  console.debug('Increment transaction receipt:', receipt)
-
-  return receipt
+export async function incrementCounter(): Promise<TransactionReceipt> {
+  console.debug('Incrementing counter')
+  return counterContract.sendTx('increment')
 }
 
 // Function to get the counter value
-export async function getCounterValue(counterAddress: `0x${string}`): Promise<number> {
-  const value = await publicClient.readContract({
-    address: counterAddress,
-    abi: COUNTER_ABI,
-    functionName: 'getValue',
-  }) as bigint;
-
+export async function getCounterValue(): Promise<number> {
+  const value = await counterContract.call('getValue') as bigint
   console.debug('Current counter value:', Number(value))
-  return Number(value);
-}
-
-// Function to check if a contract is deployed at a given address
-export async function isContractDeployed(address: Address): Promise<boolean> {
-  try {
-    const code = await publicClient.getCode({ address })
-    // If the bytecode is not empty, the contract is deployed
-    return code !== undefined && code !== '0x'
-  } catch (error) {
-    console.error('Error checking contract deployment:', error)
-    return false
-  }
+  return Number(value)
 }
 
 // Function to check if the Counter contract is deployed
 export async function isCounterContractDeployed(): Promise<boolean> {
-  return isContractDeployed(getCounterAddress())
+  return counterContract.isDeployed()
 }
 
 // Function to get the Counter contract address
 export function getCounterAddress(): Address {
-  const saltHex = getCounterSalt()
-  return computeContractAddress(COUNTER_BYTECODE as `0x${string}`, saltHex)
+  return counterContract.address
 }
 
+// Keeping testEmitRead as it was
 export async function testEmitRead(
   counterAddress: Address,
   eventEntry: EventEntry
@@ -133,7 +44,7 @@ export async function testEmitRead(
   const eventId = {
     origin: eventEntry.log.address,
     blockNumber: eventEntry.log.blockNumber,
-    logIndex: BigInt(eventEntry.log.logIndex ?? 0), // Add null check and default to 0
+    logIndex: BigInt(eventEntry.log.logIndex ?? 0),
     timestamp: eventEntry.timestamp,
     chainId: BigInt(eventEntry.chainId)
   }
@@ -142,21 +53,7 @@ export async function testEmitRead(
 
   console.debug('Calling testEmitRead with:', { eventId, eventData })
 
-  const { request } = await publicClient.simulateContract({
-    address: counterAddress,
-    abi: COUNTER_ABI,
-    functionName: 'testEmitRead',
-    args: [eventId, eventData],
-    account: account.address,
-  })
-
-  const hash = await walletClient.writeContract(request)
-  console.debug('testEmitRead transaction sent. Hash:', hash)
-
-  const receipt = await waitForReceipt(hash)
-  console.debug('testEmitRead transaction receipt:', receipt)
-
-  return receipt
+  return counterContract.sendTx('testEmitRead', [eventId, eventData])
 }
 
 // New function to watch for counter events
@@ -187,6 +84,5 @@ export function watchCounterEvents(
       }
     },
   });
-
   return unwatch;
 }

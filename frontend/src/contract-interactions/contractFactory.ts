@@ -1,15 +1,26 @@
-import { getContract, Address, TransactionReceipt, Abi, keccak256, toHex, getCreate2Address } from 'viem'
+import { Address, TransactionReceipt, Abi, keccak256, toHex, getCreate2Address } from 'viem'
 import { CREATE2_FACTORY_ADDRESS } from '../constants'
 import { account, getClient } from './wallet'
 
+// Updated ContractWrapper interface with address field
 interface ContractWrapper {
-  contract: any
+  address: Address
+  sendTx: (
+    functionName: string,
+    args?: any[]
+  ) => Promise<TransactionReceipt>
+  call: (
+    functionName: string,
+    args?: any[]
+  ) => Promise<any>
   deploy: () => Promise<{ contractAddress: Address; receipt: TransactionReceipt }>
   isDeployed: () => Promise<boolean>
 }
 
+// Default salt value
 const defaultSalt = '0x' + keccak256(toHex('my_salt')).slice(2, 34).padStart(64, '0') as `0x${string}`
 
+// Contract cache to avoid redundant instances
 const contractCache: { [key: string]: ContractWrapper } = {}
 
 // Function to compute contract address
@@ -79,6 +90,60 @@ export async function isXContractDeployed(chainId: number, address: Address): Pr
   }
 }
 
+// Separate sendTx function
+export async function sendTx(
+  chainId: number,
+  contractAddress: Address,
+  abi: Abi,
+  functionName: string,
+  args: any[] = []
+): Promise<TransactionReceipt> {
+  const { publicClient, walletClient } = getClient(chainId)
+  console.debug(`Preparing to send transaction for function ${functionName} with args:`, args)
+  
+  // Simulate the contract call to get the transaction request
+  const { request } = await publicClient.simulateContract({
+    address: contractAddress,
+    abi,
+    functionName,
+    args,
+    account: account.address,
+  })
+
+  // Send the transaction
+  const hash = await walletClient.writeContract(request)
+  console.debug(`${functionName} transaction sent. Hash:`, hash)
+
+  // Wait for the transaction receipt
+  const receipt = await publicClient.waitForTransactionReceipt({ hash })
+  console.debug(`${functionName} transaction receipt:`, receipt)
+
+  return receipt
+}
+
+// Separate call function
+export async function call(
+  chainId: number,
+  contractAddress: Address,
+  abi: Abi,
+  functionName: string,
+  args: any[] = []
+): Promise<any> {
+  const { publicClient } = getClient(chainId)
+  console.debug(`Calling function ${functionName} with args:`, args)
+  
+  // Read the contract data
+  const result = await publicClient.readContract({
+    address: contractAddress,
+    abi,
+    functionName,
+    args,
+  })
+  console.debug(`Result of ${functionName}:`, result)
+  return result
+}
+
+// Updated getXContract function
 export function getXContract(
   chainId: number,
   abi: Abi,
@@ -92,21 +157,13 @@ export function getXContract(
     return contractCache[cacheKey]
   }
 
-  const { publicClient, walletClient } = getClient(chainId)
-
-  const contract = getContract({
-    address: contractAddress,
-    abi,
-    client: {
-      public: publicClient,
-      wallet: walletClient
-    },
-  })
-
+  // Create the ContractWrapper without directly exposing the viem contract object
   const wrapper: ContractWrapper = {
-    contract,
-    deploy: async () => deployXContract(chainId, bytecode),
-    isDeployed: async () => isXContractDeployed(chainId, contractAddress),
+    address: contractAddress,
+    sendTx: (functionName: string, args: any[] = []) => sendTx(chainId, contractAddress, abi, functionName, args),
+    call: (functionName: string, args: any[] = []) => call(chainId, contractAddress, abi, functionName, args),
+    deploy: () => deployXContract(chainId, bytecode, salt),
+    isDeployed: () => isXContractDeployed(chainId, contractAddress),
   }
 
   contractCache[cacheKey] = wrapper
