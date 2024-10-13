@@ -13,11 +13,11 @@ Here's the plan for today/tomorrow's hackathon:
 
 [x] Create frontend CREATE2 deployment & embedded wallet library
   * This should be first because it will let me test the application super quickly.
-[ ] Create simple Twitter / message board app
+[x] Create simple Twitter / message board app
   * This will allow me to start testing reading and writing data onchain
-[ ] Create an onchain function to spin up a new Supersim chain
+[x] Create an onchain function to spin up a new Supersim chain
   * This should look like a local service which watches my local chain for a 'new chain' event and then based on that event, spins up a new Supersim instance with a deterministic RPC / chain ID.
-[ ] Call this function in our frontend, so it becomes possible to deploy new chains via a tx
+[x] Call this function in our frontend, so it becomes possible to deploy new chains via a tx
   * This will be useful for showing the infinite scale
 [ ] Add a "spam" function which spams local chains with transactions & counts the TPS
   * It should be clear that the number of txs you can spam increases with the number of chains you've got
