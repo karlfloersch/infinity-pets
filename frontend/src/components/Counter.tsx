@@ -1,13 +1,5 @@
-import { useEffect, useCallback } from 'react'
-import {
-  deployCounterContract,
-  getCounterAddress,
-  testEmitRead,
-  watchCounterEvents,
-  incrementCounter,
-  getCounterValue,
-  isCounterContractDeployed
-} from '../contract-interactions/contractInteractions'
+import { useEffect, useCallback, useState } from 'react'
+import { CounterContract } from '../contract-interactions/contractInteractions'
 import { INITIAL_CHAIN_ID } from '../constants'
 import { account } from '../contract-interactions/wallet'
 import { useCounterState, EventEntry } from '../state/CounterState'
@@ -33,27 +25,35 @@ const Popup = ({ message, isSuccess }: { message: string; isSuccess: boolean }) 
 export function Counter() {
   const { state, dispatch } = useCounterState();
   const { executeTransaction } = useTransaction();
+  const [counterContract, setCounterContract] = useState<CounterContract | null>(null);
+
+  useEffect(() => {
+    setCounterContract(new CounterContract(INITIAL_CHAIN_ID));
+  }, []);
 
   const fetchCounterValue = useCallback(async () => {
-    if (state.isCounterDeployed) {
+    if (state.isCounterDeployed && counterContract) {
       try {
-        const value = await getCounterValue();
+        const value = await counterContract.getCounterValue();
         dispatch({ type: 'SET_COUNTER_VALUE', payload: value.toString() });
       } catch (error) {
         console.error('Error fetching counter value:', error);
       }
     }
-  }, [state.isCounterDeployed, dispatch]);
+  }, [state.isCounterDeployed, counterContract, dispatch]);
 
   const checkCounterDeployment = useCallback(async () => {
-    const deployed = await isCounterContractDeployed();
-    dispatch({ type: 'SET_COUNTER_DEPLOYED', payload: deployed });
-  }, [dispatch]);
+    if (counterContract) {
+      const deployed = await counterContract.isCounterContractDeployed();
+      dispatch({ type: 'SET_COUNTER_DEPLOYED', payload: deployed });
+    }
+  }, [counterContract, dispatch]);
 
   const handleDeploy = async () => {
+    if (!counterContract) return;
     try {
       await executeTransaction('Deploy Contract', async () => {
-        await deployCounterContract();
+        await counterContract.deployCounterContract();
       });
       await checkCounterDeployment();
       await fetchCounterValue();
@@ -63,9 +63,10 @@ export function Counter() {
   }
 
   const handleIncrement = async () => {
+    if (!counterContract) return;
     try {
       await executeTransaction('Increment Counter', async () => {
-        await incrementCounter();
+        await counterContract.incrementCounter();
       });
       await fetchCounterValue();
     } catch (error) {
@@ -74,8 +75,8 @@ export function Counter() {
   }
 
   const handleTestEmitRead = async () => {
-    if (state.events.length === 0) {
-      console.error('No events available to test');
+    if (!counterContract || state.events.length === 0) {
+      console.error('No events available to test or contract not initialized');
       return;
     }
 
@@ -83,7 +84,7 @@ export function Counter() {
 
     try {
       await executeTransaction('Test Emit Read', async () => {
-        await testEmitRead(getCounterAddress(), latestEvent);
+        await counterContract.testEmitRead(latestEvent);
       });
     } catch (error) {
       console.error(error);
@@ -99,8 +100,8 @@ export function Counter() {
   }, [checkCounterDeployment, fetchCounterValue]);
 
   useEffect(() => {
-    const watchEvents = async () => {
-      const unwatch = watchCounterEvents(INITIAL_CHAIN_ID, (eventEntry: EventEntry) => {
+    if (state.isCounterDeployed && counterContract) {
+      const unwatch = counterContract.watchCounterEvents((eventEntry: EventEntry) => {
         dispatch({
           type: 'ADD_EVENT',
           payload: eventEntry
@@ -110,12 +111,8 @@ export function Counter() {
       return () => {
         unwatch();
       };
-    };
-
-    if (state.isCounterDeployed) {
-      watchEvents();
     }
-  }, [state.isCounterDeployed, dispatch]);
+  }, [state.isCounterDeployed, counterContract, dispatch]);
 
   return (
     <div>
@@ -126,7 +123,7 @@ export function Counter() {
         </button>
       ) : (
         <>
-          <p>Counter Address: {getCounterAddress()}</p>
+          {counterContract && <p>Counter Address: {counterContract.getCounterAddress()}</p>}
           <p>Counter Value: {state.counterValue}</p>
           <button
             onClick={handleIncrement}
