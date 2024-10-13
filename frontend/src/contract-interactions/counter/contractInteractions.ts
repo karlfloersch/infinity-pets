@@ -1,9 +1,9 @@
 import { Address, TransactionReceipt, concat } from 'viem'
-import { COUNTER_ABI, COUNTER_BYTECODE } from '../constants'
-import { getXContract } from './contractFactory'
-import { EventEntry } from '../state/CounterState'
+import { COUNTER_ABI, COUNTER_BYTECODE } from '../../constants'
+import { getXContract } from '../contractFactory'
+import { EventEntry } from '../../state/CounterState'
 import { Log } from 'viem'
-import { getClient } from './wallet'
+import { getClient } from '../wallet'
 
 export class CounterContract {
   private counterContract;

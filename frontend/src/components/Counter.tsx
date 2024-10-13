@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useState } from 'react'
-import { CounterContract } from '../contract-interactions/contractInteractions'
+import { CounterContract } from '../contract-interactions/counter/contractInteractions'
 import { INITIAL_CHAIN_ID } from '../constants'
 import { account } from '../contract-interactions/wallet'
 import { useCounterState, EventEntry } from '../state/CounterState'
