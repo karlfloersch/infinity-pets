@@ -2,14 +2,30 @@
 pragma solidity ^0.8.13;
 
 import "./SuperchainEnabled2.sol";
+import "./Promise.sol";
 import { ICrossL2Inbox } from "@contracts-bedrock/L2/interfaces/ICrossL2Inbox.sol";
 import { Predeploys } from "@contracts-bedrock/libraries/Predeploys.sol";
 
+contract CounterPromise is Promise {
+    struct Input {
+        uint256 counter;
+        string message;
+    }
+
+    Input public input;
+
+    constructor(Input memory _input) {
+        input = _input;
+    }
+}
+
 contract Counter2 is SuperchainEnabled2 {
     uint256 public number;
+    Counter2 public remoteCounter;
 
     event CounterDeployed(uint256 indexed magicNumber, address indexed contractAddress);
     event CounterIncremented(uint256 indexed newValue);
+    event RemoteCounterUpdated(uint256 counter, string message);
 
     constructor() {
         emit CounterDeployed(420, address(this));
@@ -39,16 +55,32 @@ contract Counter2 is SuperchainEnabled2 {
         return 420;
     }
 
-    /// @notice Sends a cross-chain message to increment the counter on another chain
-    /// @param destChainId The destination chain ID
-    function sendIncrementToChain(uint256 destChainId) external {
-        bytes memory data = abi.encodeWithSelector(this.crossChainIncrement.selector);
-        _xMessageSelf(destChainId, data);
+    function ingestRemoteCounter(CounterPromise.Input memory input) external {
+        number += input.counter;
+        emit RemoteCounterUpdated(input.counter, input.message);
     }
 
-    /// @notice Handles incoming cross-chain messages to increment the counter
-    function crossChainIncrement() external xOnlyFromSelf {
+
+    function sendIncrementToChain(uint256 destChainId) external {
+        remoteCounter = Counter2(getRemote(destChainId, address(this)));
+
+        // app store can be backed into the SuperchainEnabled lib
+        // remoteCounter = Counter2(getRemote(destChainId, "UniswapRouter"));
+
+        CounterPromise p = remoteCounter.crossChainIncrement();
+        p.then(this.ingestRemoteCounter.selector);
+    }
+
+    // The `async` modifier indicates to the linter that the return value should be a promise
+    function crossChainIncrement() external async returns (CounterPromise) {
+        (uint256 chainId, address contractAddr) = getXSender();
+        require(chainId != block.chainid, "Invalid sender");
+        require(contractAddr == address(this), "Invalid sender");
         number += 10;
         emit CounterIncremented(number);
+        return new CounterPromise(CounterPromise.Input({
+            counter: number,
+            message: "Hello world"
+        }));
     }
 }

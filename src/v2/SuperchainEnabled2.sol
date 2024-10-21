@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
 // SuperchainEnabled provides utilities for cross-chain event validation,
@@ -5,12 +6,18 @@ pragma solidity ^0.8.13;
 
 import { IL2ToL2CrossDomainMessenger } from "@contracts-bedrock/L2/interfaces/IL2ToL2CrossDomainMessenger.sol";
 import { Predeploys } from "@contracts-bedrock/libraries/Predeploys.sol";
+import "./Promise.sol";
 
 abstract contract SuperchainEnabled2 {
     // Error definitions
     error CallerNotL2ToL2CrossDomainMessenger();
     error InvalidCrossDomainSender();
     error InvalidSourceChain();
+
+    // Stub implementation for async modifier
+    modifier async {
+        _;
+    }
 
     /// @notice Sends a cross-chain message to a destination address on another chain
     /// @param destChainId The chain ID of the destination chain
@@ -79,5 +86,15 @@ abstract contract SuperchainEnabled2 {
             revert InvalidSourceChain();
         }
         _;
+    }
+
+    function getRemote(uint256 destChainId, address contractAddress) public view returns (address) {
+        // Stub implementation
+        return contractAddress;
+    }
+
+    function getXSender() internal view returns (uint256, address) {
+        // Stub implementation
+        return (0, address(0));
     }
 }
