@@ -11,6 +11,7 @@ abstract contract SuperchainEnabled {
     error CallerNotL2ToL2CrossDomainMessenger();
     error InvalidCrossDomainSender();
     error InvalidSourceChain();
+    error AlreadyOnDestinationChain();
 
     /// @notice Sends a cross-chain message to a destination address on another chain
     /// @param destChainId The chain ID of the destination chain
@@ -35,6 +36,9 @@ abstract contract SuperchainEnabled {
         uint256 destChainId,
         bytes memory data
     ) internal {
+        if (destChainId == block.chainid) {
+            revert AlreadyOnDestinationChain();
+        }
         _xMessageContract(destChainId, address(this), data);
     }
 
