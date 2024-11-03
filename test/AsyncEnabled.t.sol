@@ -33,7 +33,7 @@ contract AsyncEnabledTest is Test {
         address expectedRemoteSelf = address(AsyncUtils.getRemoteCaller(address(asyncContract), remoteChainId));
         assertEq(remoteSelf, expectedRemoteSelf);
 
-        address remoteSelfAuthorizedCaller = AsyncRemoteProxy(remoteSelf).localSenderAddress();
+        address remoteSelfAuthorizedCaller = AsyncRemoteProxy(remoteSelf).remoteAddress();
         assertEq(remoteSelfAuthorizedCaller, address(asyncContract));
     }
 
@@ -41,9 +41,17 @@ contract AsyncEnabledTest is Test {
         uint256 remoteChainId = 420;
         address myPromise = asyncContract.makeFunc1Promise(remoteChainId);
 
-        bytes memory promisePayload = AsyncPromise(myPromise).callDataToSend();
+        AsyncCall memory asyncCall = AsyncCall(
+            XAddress(address(asyncContract), block.chainid),    
+            XAddress(address(asyncContract), remoteChainId),
+            0,
+            abi.encodeWithSelector(MyAsyncEnabled.myAsyncFunction1.selector)
+        );
 
-        assertEq(promisePayload, abi.encodeWithSelector(MyAsyncEnabled.myAsyncFunction1.selector));
+        bytes32 expectedMessageId = AsyncUtils.getAsyncCallId(asyncCall);
+
+        bytes32 messageId = AsyncPromise(myPromise).messageId();
+        assertEq(messageId, expectedMessageId);
     }
 
     function test_addCallback() public {

@@ -9,12 +9,12 @@ enum AsyncPromiseState {
 contract AsyncPromise {
     address public immutable localCaller;
     bytes4 public callbackSelector;
-    bytes public callDataToSend;
+    bytes32 public messageId;
     AsyncPromiseState public state = AsyncPromiseState.AWAITING_CALLBACK_SELECTOR;
 
-    constructor(address _caller, bytes memory _callDataToSend) {
+    constructor(address _caller, bytes32 _messageId) {
         localCaller = _caller;
-        callDataToSend = _callDataToSend;
+        messageId = _messageId;
     }
 
     fallback() external {
