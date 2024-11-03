@@ -7,18 +7,18 @@ enum AsyncPromiseState {
 }
 
 contract AsyncPromise {
-    address public immutable localCaller;
+    address public immutable localInvoker;
     bytes4 public callbackSelector;
     bytes32 public messageId;
     AsyncPromiseState public state = AsyncPromiseState.AWAITING_CALLBACK_SELECTOR;
 
-    constructor(address _caller, bytes32 _messageId) {
-        localCaller = _caller;
+    constructor(address _invoker, bytes32 _messageId) {
+        localInvoker = _invoker;
         messageId = _messageId;
     }
 
     fallback() external {
-        require(msg.sender == localCaller, "Only the caller can call this function");
+        require(msg.sender == localInvoker, "Only the caller can set this promise's callback");
 
         if (state == AsyncPromiseState.COMPLETED) {
             revert("Promise already setup");

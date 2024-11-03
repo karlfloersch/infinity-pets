@@ -3,39 +3,45 @@ import {console} from "forge-std/console.sol";
 import {AsyncPromise} from "./AsyncPromise.sol";
 import {AsyncUtils, AsyncCall, XAddress} from "./AsyncUtils.sol";
 
+// An AsyncRemoteProxy is a local representation of a contract on a remote chain.
+// Calling an AsyncRemoteProxy triggers an authenticated call to an async function,
+//  on the remote chain and returns a local Promise contract,
+//  which will eventually trigger a local callback with the return value of the remote async call.
 contract AsyncRemoteProxy {
-    address public immutable remoteAddress;
+    // address and chainId of the remote contract triggered by calling this local proxy
+    XAddress public remoteContract;
     uint256 public chainId;
     uint256 public nonce = 0;
     mapping(uint256 => AsyncPromise) public promisesByNonce;
     mapping(bytes32 => AsyncPromise) public promisesById;
 
-    function getRemoteAddress() external view returns (address) {
-        return remoteAddress;
+    function getRemoteContract() external view returns (XAddress memory) {
+        return remoteContract;
     }
 
     constructor() {
-        remoteAddress = msg.sender;
+        remoteContract = XAddress(msg.sender, 0); // TODO: make this a constructor arg instead of leaving uninitialized
     }
 
     // TODO: move chainID into the contstructor to prevent collision
     function setChainId(uint256 _chainId) external {
-        chainId = _chainId;
+        console.log("set chainId to", _chainId);
+        remoteContract.chainId = _chainId;
     }
 
     fallback(bytes calldata data) external returns (bytes memory) {
-        console.log("got into fallback");
+        XAddress memory fromContract = XAddress(msg.sender, block.chainid);
 
         AsyncCall memory asyncCall = AsyncCall(
-            XAddress(remoteAddress, block.chainid), // remoteAddress could become msg.sender in future
-            XAddress(remoteAddress, chainId),
+            fromContract,
+            remoteContract,
             nonce,
             data
         );
 
         bytes32 callId = AsyncUtils.getAsyncCallId(asyncCall);
 
-        AsyncPromise newPromise = new AsyncPromise(remoteAddress, callId);
+        AsyncPromise newPromise = new AsyncPromise(msg.sender, callId);
         promisesByNonce[nonce] = newPromise;
         promisesById[callId] = newPromise;
         nonce++;

@@ -29,12 +29,13 @@ contract AsyncEnabledTest is Test {
 
     function test_spawnRemoteSelf() public {
         uint256 remoteChainId = 420;
-        address remoteSelf = address(asyncContract.spawnRemoteSelf(remoteChainId));
+        address remoteSelfProxy = address(asyncContract.spawnRemoteSelf(remoteChainId));
         address expectedRemoteSelf = address(AsyncUtils.getRemoteCaller(address(asyncContract), remoteChainId));
-        assertEq(remoteSelf, expectedRemoteSelf);
+        assertEq(remoteSelfProxy, expectedRemoteSelf);
 
-        address remoteSelfAuthorizedCaller = AsyncRemoteProxy(remoteSelf).remoteAddress();
-        assertEq(remoteSelfAuthorizedCaller, address(asyncContract));
+        XAddress memory proxyRemoteContract = AsyncRemoteProxy(remoteSelfProxy).getRemoteContract();
+        assertEq(proxyRemoteContract.addr, address(asyncContract));
+        assertEq(proxyRemoteContract.chainId, remoteChainId);
     }
 
     function test_makePromise() public {
