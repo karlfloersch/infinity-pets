@@ -33,7 +33,7 @@ contract Counter is SuperchainEnabled {
         return number;
     }
 
-    function testEmitRead(ICrossL2Inbox.Identifier calldata _eventId, bytes calldata _eventData) external returns (uint256) {
+    function nonTestEmitRead(ICrossL2Inbox.Identifier calldata _eventId, bytes calldata _eventData) external returns (uint256) {
         ICrossL2Inbox(Predeploys.CROSS_L2_INBOX).validateMessage(_eventId, keccak256(_eventData));
         number += 420;
         return 420;
