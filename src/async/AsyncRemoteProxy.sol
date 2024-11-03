@@ -7,7 +7,8 @@ contract AsyncRemoteProxy {
     address public immutable remoteAddress;
     uint256 public chainId;
     uint256 public nonce = 0;
-    mapping(uint256 => AsyncPromise) public promises;
+    mapping(uint256 => AsyncPromise) public promisesByNonce;
+    mapping(bytes32 => AsyncPromise) public promisesById;
 
     function getRemoteAddress() external view returns (address) {
         return remoteAddress;
@@ -32,8 +33,11 @@ contract AsyncRemoteProxy {
             data
         );
 
-        AsyncPromise newPromise = new AsyncPromise(remoteAddress, AsyncUtils.getAsyncCallId(asyncCall));
-        promises[nonce] = newPromise;
+        bytes32 callId = AsyncUtils.getAsyncCallId(asyncCall);
+
+        AsyncPromise newPromise = new AsyncPromise(remoteAddress, callId);
+        promisesByNonce[nonce] = newPromise;
+        promisesById[callId] = newPromise;
         nonce++;
         console.log("made promise", address(newPromise));
         return abi.encodePacked(bytes32(uint256(uint160(address(newPromise)))));
