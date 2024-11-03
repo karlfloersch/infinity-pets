@@ -2,7 +2,8 @@
 pragma solidity ^0.8.13;
 import {Test, console} from "forge-std/Test.sol";
 
-import {AsyncEnabled, RemoteCallerProxy} from "./AsyncEnabled.sol";
+import {AsyncEnabled} from "../async/AsyncEnabled.sol";
+import {AsyncRemoteProxy} from "../async/AsyncRemoteProxy.sol";
 
 // and assume that we want to create an async contract as follows:
 contract MyAsyncEnabled is AsyncEnabled {
