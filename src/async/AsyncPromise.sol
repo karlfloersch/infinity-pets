@@ -29,6 +29,7 @@ contract AsyncPromise {
             console.log("got callback selector");
             console.logBytes(msg.data);
             // 4 bytes for the outer selector, 20 bytes for the address, 4 bytes for the callback selector
+            // TODO: battle test this against more examples / confirm sufficiently generalized
             callbackSelector = bytes4(msg.data[24:28]);
             state = AsyncPromiseState.COMPLETED;
         }

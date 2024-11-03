@@ -10,9 +10,11 @@ contract AsyncCallRelayer {
     }
 
     function relayAsyncCall(AsyncCall calldata _asyncCall) external {
-        // require xDMsender == AsyncRemoteProxy for source/from targetAddress and local/block.chainid
+        // TODO: require xDMsender == AsyncRemoteProxy for source/from targetAddress and local/block.chainid
 
         (bool success, bytes memory returndata) = targetAddress.call(_asyncCall.data);
+
+        // TODO: initiate callback xDM
 
         return;
     }
