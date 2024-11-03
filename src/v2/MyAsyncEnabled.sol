@@ -1,13 +1,28 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
+import {Test, console} from "forge-std/Test.sol";
 
 import {AsyncEnabled, RemoteCallerProxy} from "./AsyncEnabled.sol";
 
 // and assume that we want to create an async contract as follows:
 contract MyAsyncEnabled is AsyncEnabled {
+    // remote caller spawner for testing purposes
     function spawnRemoteSelf(uint256 _chainId) external returns (address) {
         address remoteCaller = getRemoteSelf(_chainId);
         return remoteCaller;
+    }
+
+    function makeFunc1Promise(uint256 _remoteChainId) external returns (address) {
+        RemoteMyAsyncEnabled remoteSelf = RemoteMyAsyncEnabled(getRemoteSelf(_remoteChainId));
+        MyAsyncFunction1Promise myPromise = remoteSelf.myAsyncFunction1();
+        return address(myPromise);
+    }
+
+    function makeFunc1Callback(uint256 _remoteChainId) external returns (address) {
+        RemoteMyAsyncEnabled remoteSelf = RemoteMyAsyncEnabled(getRemoteSelf(_remoteChainId));
+        MyAsyncFunction1Promise myPromise = remoteSelf.myAsyncFunction1();
+        myPromise.then(this.myCallback1);
+        return address(myPromise);
     }
 
     function myAsyncFunction1() external async returns (uint256) {
