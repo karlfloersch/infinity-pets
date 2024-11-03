@@ -15,6 +15,9 @@ contract AsyncEnabledTest is Test {
     MyAsyncEnabled public asyncContract;
 
     function setUp() public {
+        uint256 fork1 = vm.createFork("http://127.0.0.1:9545");
+        vm.selectFork(fork1);
+
         asyncContract = new MyAsyncEnabled();
     }
 

@@ -35,3 +35,8 @@ dev-autorelay: build-contracts
 # Build both contracts and frontend for production
 build: build-contracts
     cd frontend && npm run build
+
+# Run supersim first then run forge tests
+test:
+    ./supersim/supersim & sleep 1 && forge test -vv
+    pkille -f supersim
