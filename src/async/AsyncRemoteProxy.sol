@@ -19,14 +19,8 @@ contract AsyncRemoteProxy {
         return remoteContract;
     }
 
-    constructor() {
-        remoteContract = XAddress(msg.sender, 0); // TODO: make this a constructor arg instead of leaving uninitialized
-    }
-
-    // TODO: move chainID into the contstructor to prevent collision
-    function setChainId(uint256 _chainId) external {
-        console.log("set chainId to", _chainId);
-        remoteContract.chainId = _chainId;
+    constructor(uint256 _chainId) {
+        remoteContract = XAddress(msg.sender, _chainId);
     }
 
     fallback(bytes calldata data) external returns (bytes memory) {

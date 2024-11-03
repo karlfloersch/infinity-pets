@@ -37,12 +37,16 @@ library AsyncUtils {
     }
 
     function getRemoteCaller(address _forAddress, uint256 _chainId) public view returns (AsyncRemoteProxy) {
-        bytes32 salt = keccak256(abi.encodePacked(_forAddress, bytes32(_chainId)));
         return AsyncRemoteProxy(address(uint160(uint(keccak256(abi.encodePacked(
             bytes1(0xff),
             _forAddress,
-            salt,
-            keccak256(type(AsyncRemoteProxy).creationCode)
+            bytes32(0),
+            keccak256(
+                abi.encodePacked(
+                    type(AsyncRemoteProxy).creationCode,
+                    abi.encodePacked(_chainId)
+                )
+            )
         ))))));
     }
 

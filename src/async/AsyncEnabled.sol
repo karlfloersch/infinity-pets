@@ -31,8 +31,7 @@ contract AsyncEnabled {
     function getRemoteInstance(address _remoteInstanceAddress, uint256 _chainId) internal returns (address) {
         bytes32 salt = keccak256(abi.encodePacked(_remoteInstanceAddress, bytes32(_chainId)));
         if (address(remoteCallerProxies[_remoteInstanceAddress][_chainId]) == address(0)) {
-            remoteCallerProxies[_remoteInstanceAddress][_chainId] = new AsyncRemoteProxy{salt: salt}();
-            remoteCallerProxies[_remoteInstanceAddress][_chainId].setChainId(_chainId);
+            remoteCallerProxies[_remoteInstanceAddress][_chainId] = new AsyncRemoteProxy{salt: bytes32(0)}(_chainId);
         }
         return address(remoteCallerProxies[_remoteInstanceAddress][_chainId]);
     }
