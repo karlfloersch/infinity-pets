@@ -1,6 +1,7 @@
 pragma solidity ^0.8.13;
 import {console} from "forge-std/console.sol";
-import {AsyncCallRelayer, AsyncCallbackRelayer} from "./AsyncEnabled.sol";
+import {AsyncCallbackRelayer} from "./AsyncEnabled.sol";
+import {AsyncCallRelayer} from "./AsyncCallRelayer.sol";
 import {AsyncRemoteProxy} from "./AsyncRemoteProxy.sol";
 
 struct XAddress {

@@ -35,11 +35,11 @@ contract AsyncRemoteProxy {
 
         bytes32 callId = AsyncUtils.getAsyncCallId(asyncCall);
 
-        AsyncPromise newPromise = new AsyncPromise(msg.sender, callId);
-        promisesByNonce[nonce] = newPromise;
-        promisesById[callId] = newPromise;
+        AsyncPromise promiseContract = new AsyncPromise(msg.sender, callId);
+        promisesByNonce[nonce] = promiseContract;
+        promisesById[callId] = promiseContract;
         nonce++;
-        console.log("made promise", address(newPromise));
-        return abi.encodePacked(bytes32(uint256(uint160(address(newPromise)))));
+        console.log("made promise", address(promiseContract));
+        return abi.encodePacked(bytes32(uint256(uint160(address(promiseContract)))));
     }
 }

@@ -3,7 +3,8 @@ pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
 import {Counter} from "../src/Counter.sol";
-import {AsyncEnabled, AsyncCallRelayer, AsyncCallbackRelayer} from "../src/async/AsyncEnabled.sol";
+import {AsyncEnabled, AsyncCallbackRelayer} from "../src/async/AsyncEnabled.sol";
+import {AsyncCallRelayer} from "../src/async/AsyncCallRelayer.sol";
 import {AsyncRemoteProxy} from "../src/async/AsyncRemoteProxy.sol";
 import {AsyncPromise} from "../src/async/AsyncPromise.sol";
 import {AsyncUtils, AsyncCall, XAddress} from "../src/async/AsyncUtils.sol";

@@ -3,14 +3,7 @@ pragma solidity ^0.8.13;
 import {AsyncUtils} from "./AsyncUtils.sol";
 import {console} from "forge-std/console.sol";
 import {AsyncRemoteProxy} from "./AsyncRemoteProxy.sol";
-
-contract AsyncCallRelayer {
-    address public immutable forAddress;
-
-    constructor() {
-        forAddress = msg.sender;
-    }
-}
+import {AsyncCallRelayer} from "./AsyncCallRelayer.sol";
 
 contract AsyncCallbackRelayer {
     address public immutable forAddress;
