@@ -45,4 +45,44 @@ library AsyncUtils {
             keccak256(type(AsyncRemoteProxy).creationCode)
         ))))));
     }
+
+    function encodeAsyncCall(AsyncCall memory asyncCall) public pure returns (bytes memory) {
+        return abi.encode(
+            asyncCall.from.addr,
+            asyncCall.from.chainId,
+            asyncCall.to.addr,
+            asyncCall.to.chainId,
+            asyncCall.nonce,
+            asyncCall.data
+        );
+    }
+
+    function decodeAsyncCall(bytes memory data) public pure returns (AsyncCall memory) {
+    (
+        address fromAddr,
+        uint256 fromChainId,
+            address toAddr,
+            uint256 toChainId,
+            uint256 nonce,
+            bytes memory callData
+    ) = abi.decode(data, (address, uint256, address, uint256, uint256, bytes));
+
+    return AsyncCall(
+        XAddress(fromAddr, fromChainId),
+        XAddress(toAddr, toChainId),
+        nonce,
+        callData
+        );
+    }
+
+    function getAsyncCallId(AsyncCall memory asyncCall) public pure returns (bytes32) {
+        return keccak256(abi.encode(
+            asyncCall.from.addr,
+            asyncCall.from.chainId,
+            asyncCall.to.addr,
+            asyncCall.to.chainId,
+            asyncCall.nonce,
+            asyncCall.data
+        ));
+    }
 }
