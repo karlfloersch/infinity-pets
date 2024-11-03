@@ -69,7 +69,7 @@ export function Counter({ chainId }: { chainId: number }) {
     }
   }
 
-  const handleTestEmitRead = async () => {
+  const handleAttemptEmitRead = async () => {
     if (!counterContract || state.events.length === 0) {
       console.error('No events available to test or contract not initialized');
       return;
@@ -78,8 +78,8 @@ export function Counter({ chainId }: { chainId: number }) {
     const latestEvent = state.events[state.events.length - 1];
 
     try {
-      await executeTransaction('Test Emit Read', async () => {
-        await counterContract.testEmitRead(latestEvent);
+      await executeTransaction('Attempt Emit Read', async () => {
+        await counterContract.attemptEmitRead(latestEvent);
       });
     } catch (error) {
       console.error(error);
@@ -162,10 +162,10 @@ export function Counter({ chainId }: { chainId: number }) {
         ))}
       </ul>
       <button 
-        onClick={handleTestEmitRead} 
+        onClick={handleAttemptEmitRead} 
         disabled={!state.isCounterDeployed || state.events.length === 0}
       >
-        Test Emit Read
+        Attempt Emit Read
       </button>
     </div>
   )

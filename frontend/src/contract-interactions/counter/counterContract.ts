@@ -40,7 +40,7 @@ export class CounterContract {
   }
 
   // Function to test emit read
-  async testEmitRead(eventEntry: EventEntry): Promise<TransactionReceipt> {
+  async attemptEmitRead(eventEntry: EventEntry): Promise<TransactionReceipt> {
     const eventId = {
       origin: eventEntry.log.address,
       blockNumber: eventEntry.log.blockNumber,
@@ -51,9 +51,9 @@ export class CounterContract {
 
     const eventData = concat([...eventEntry.log.topics, eventEntry.log.data])
 
-    console.debug('Calling testEmitRead with:', { eventId, eventData })
+    console.debug('Calling attemptEmitRead with:', { eventId, eventData })
 
-    return this.counterContract.sendTx('testEmitRead', [eventId, eventData])
+    return this.counterContract.sendTx('attemptEmitRead', [eventId, eventData])
   }
 
   // Function to watch for counter events
