@@ -16,6 +16,11 @@ struct AsyncCall {
     bytes data;
 }
 
+struct AsyncCallback {
+    bytes32 asyncCallId;
+    bytes returnDataForCallback;
+}
+
 library AsyncUtils {
     function getAsyncCallRelayer(address _forAddress) public view returns (AsyncCallRelayer) {
         address predictedAddress = address(uint160(uint(keccak256(abi.encodePacked(
