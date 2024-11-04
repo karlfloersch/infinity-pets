@@ -20,6 +20,7 @@ frontend/*.tsbuildinfo
 node_modules/
 artifacts/
 cache_hardhat/
+src/types/
 
 # Mac OS
 .DS_Store
