@@ -61,28 +61,18 @@ contract MyAsyncEnabled is AsyncEnabled {
 
 // MyAsyncFunction1Promise is a promise for the return value of myAsyncFunction1
 // .then() will accept a callback that takes the return value of myAsyncFunction1
-contract MyAsyncFunction1Promise {
-    function then(function(uint256) external) external {
-        // ...
-        return;
-    }
+interface MyAsyncFunction1Promise {
+    function then(function(uint256) external) external;
 }
 
-contract MyAsyncFunction2Promise {
-    function then(function(bytes32) external) external {
-        // ...
-        return;
-    }
+interface MyAsyncFunction2Promise {
+    function then(function(bytes32) external) external;
 }
 
 // RemoteMyAsyncEnabled is the promified version of MyAsyncEnabled
-contract RemoteMyAsyncEnabled {
-    function myAsyncFunction1() external returns (MyAsyncFunction1Promise) {
-        return new MyAsyncFunction1Promise();
-    }
+interface RemoteMyAsyncEnabled {
+    function myAsyncFunction1() external returns (MyAsyncFunction1Promise);
 
-    // input arguments should also 
-    function myAsyncFunction2(bool _input) external returns (MyAsyncFunction2Promise) {
-        return new MyAsyncFunction2Promise();
-    }
+    // input arguments should remain the same
+    function myAsyncFunction2(bool _input) external returns (MyAsyncFunction2Promise);
 }
