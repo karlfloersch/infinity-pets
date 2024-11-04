@@ -31,6 +31,6 @@
   },
   "scripts": {
     "build": "npx hardhat compile && npx hardhat typechain",
-    "test": "yarn build && npx hardhat test"
+    "test": "npx hardhat test"
   }
 }

@@ -22,7 +22,7 @@ run-supersim:
 
 # Run supersim with --interop.autorelay flag
 run-supersim-autorelay:
-    ./supersim/supersim --interop.autorelay
+    ./supersim/main --interop.autorelay
 
 # Build contracts, run supersim, and serve frontend in parallel
 dev: build-contracts

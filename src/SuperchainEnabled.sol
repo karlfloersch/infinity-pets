@@ -45,7 +45,7 @@ abstract contract SuperchainEnabled {
     /// @notice Checks if the cross-domain message is from the expected source
     /// @param expectedSource The expected source address
     /// @return bool True if the message is from the expected source, false otherwise
-    function _isValidCrossDomainSender(address expectedSource) private view returns (bool) {
+    function _isValidCrossDomainSender(address expectedSource) internal view returns (bool) {
         if (msg.sender != Predeploys.L2_TO_L2_CROSS_DOMAIN_MESSENGER) {
             return false;
         }

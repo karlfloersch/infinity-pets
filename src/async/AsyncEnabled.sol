@@ -34,6 +34,7 @@ contract AsyncEnabled {
     }
 
     constructor() {
+        console.log("an asyncEnabled contract was just deployed!");
         asyncCallRelayer = new AsyncCallRelayer{salt: bytes32(0)}();
         asyncCallbackRelayer = new AsyncCallbackRelayer{salt: bytes32(0)}();
     }
