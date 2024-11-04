@@ -2,7 +2,6 @@ pragma solidity ^0.8.13;
 import {console} from "forge-std/console.sol";
 import {AsyncPromise} from "./AsyncPromise.sol";
 import {AsyncUtils, AsyncCall, XAddress} from "./AsyncUtils.sol";
-import {AsyncCallRelayer} from "./AsyncCallRelayer.sol";
 import {SuperchainEnabled} from "../SuperchainEnabled.sol";
 
 // An AsyncRemoteProxy is a local representation of a contract on a remote chain.
@@ -11,18 +10,23 @@ import {SuperchainEnabled} from "../SuperchainEnabled.sol";
 //  which will eventually trigger a local callback with the return value of the remote async call.
 contract AsyncRemoteProxy is SuperchainEnabled {
     // address and chainId of the remote contract triggered by calling this local proxy
-    XAddress public remoteContract;
-    uint256 public chainId;
+    XAddress internal remoteContract;
+    // address of local contract which can call this remote proxy to send async calls
+    address public localAddress;
+    // nonce for promises made by this remote proxy
     uint256 public nonce = 0;
+    // mapping of nonce to promise
     mapping(uint256 => AsyncPromise) public promisesByNonce;
+    // mapping of callId to promise
     mapping(bytes32 => AsyncPromise) public promisesById;
 
     function getRemoteContract() external view returns (XAddress memory) {
         return remoteContract;
     }
 
-    constructor(uint256 _chainId) {
+    constructor(address _remoteAddress, uint256 _chainId) {
         remoteContract = XAddress(msg.sender, _chainId);
+        localAddress = msg.sender;
     }
 
     fallback(bytes calldata data) external returns (bytes memory) {
@@ -43,17 +47,14 @@ contract AsyncRemoteProxy is SuperchainEnabled {
         nonce++;
         console.log("made promise", address(promiseContract));
 
-        uint256 remoteChainId = remoteContract.chainId;
-        AsyncCallRelayer remoteCallRelayer = AsyncUtils.getAsyncCallRelayer(remoteContract.addr);
         bytes memory relayPayload = abi.encodeWithSelector(
-            AsyncCallRelayer.relayAsyncCall.selector,
-            asyncCall
+            0x00
         );
 
         AsyncUtils.encodeAsyncCall(asyncCall);
         _xMessageContract(
-            remoteChainId,
-            address(remoteCallRelayer),
+            remoteContract.chainId,
+            remoteContract.addr,
             relayPayload
         );
 

@@ -1,7 +1,5 @@
 pragma solidity ^0.8.13;
 import {console} from "forge-std/console.sol";
-import {AsyncCallbackRelayer} from "./AsyncEnabled.sol";
-import {AsyncCallRelayer} from "./AsyncCallRelayer.sol";
 import {AsyncRemoteProxy} from "./AsyncRemoteProxy.sol";
 
 struct XAddress {
@@ -22,41 +20,21 @@ struct AsyncCallback {
 }
 
 library AsyncUtils {
-    function getAsyncCallRelayer(address _forAddress) public view returns (AsyncCallRelayer) {
-        address predictedAddress = address(uint160(uint(keccak256(abi.encodePacked(
-            bytes1(0xff),
-            _forAddress,
-            bytes32(0),
-            keccak256(type(AsyncCallRelayer).creationCode)
-        )))));
-        return AsyncCallRelayer(predictedAddress);
-    }
-
-    function getAsyncCallbackRelayer(address _forAddress) public view returns (AsyncCallbackRelayer) {
-        address predictedAddress = address(uint160(uint(keccak256(abi.encodePacked(
-            bytes1(0xff),
-            _forAddress,
-            bytes32(0),
-            keccak256(type(AsyncCallbackRelayer).creationCode)
-        )))));
-        return AsyncCallbackRelayer(predictedAddress);
-    }
-
-    function getRemoteCaller(address _forAddress, uint256 _chainId) public view returns (AsyncRemoteProxy) {
+    function calculateRemoteProxyAddress(address _localAddress, address _remoteAddress, uint256 _chainId) internal pure returns (AsyncRemoteProxy) {
         return AsyncRemoteProxy(address(uint160(uint(keccak256(abi.encodePacked(
             bytes1(0xff),
-            _forAddress,
+            _localAddress,
             bytes32(0),
             keccak256(
                 abi.encodePacked(
                     type(AsyncRemoteProxy).creationCode,
-                    abi.encodePacked(_chainId)
+                    abi.encode(_remoteAddress, _chainId)
                 )
             )
         ))))));
     }
 
-    function encodeAsyncCall(AsyncCall memory asyncCall) public pure returns (bytes memory) {
+    function encodeAsyncCall(AsyncCall memory asyncCall) internal pure returns (bytes memory) {
         return abi.encode(
             asyncCall.from.addr,
             asyncCall.from.chainId,
@@ -67,7 +45,7 @@ library AsyncUtils {
         );
     }
 
-    function decodeAsyncCall(bytes memory data) public pure returns (AsyncCall memory) {
+    function decodeAsyncCall(bytes memory data) internal pure returns (AsyncCall memory) {
     (
         address fromAddr,
         uint256 fromChainId,
@@ -85,7 +63,7 @@ library AsyncUtils {
         );
     }
 
-    function getAsyncCallId(AsyncCall memory asyncCall) public pure returns (bytes32) {
+    function getAsyncCallId(AsyncCall memory asyncCall) internal pure returns (bytes32) {
         return keccak256(abi.encode(
             asyncCall.from.addr,
             asyncCall.from.chainId,
