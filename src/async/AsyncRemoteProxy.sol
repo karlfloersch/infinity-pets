@@ -3,6 +3,7 @@ import {console} from "forge-std/console.sol";
 import {AsyncPromise} from "./AsyncPromise.sol";
 import {AsyncUtils, AsyncCall, XAddress} from "./AsyncUtils.sol";
 import {SuperchainEnabled} from "../SuperchainEnabled.sol";
+import {AsyncEnabled} from "./AsyncEnabled.sol";
 
 // An AsyncRemoteProxy is a local representation of a contract on a remote chain.
 // Calling an AsyncRemoteProxy triggers an authenticated call to an async function,
@@ -20,13 +21,13 @@ contract AsyncRemoteProxy is SuperchainEnabled {
     // mapping of callId to promise
     mapping(bytes32 => AsyncPromise) public promisesById;
 
-    function getRemoteContract() external view returns (XAddress memory) {
-        return remoteContract;
-    }
-
     constructor(address _remoteAddress, uint256 _chainId) {
         remoteContract = XAddress(msg.sender, _chainId);
         localAddress = msg.sender;
+    }
+
+    function getRemoteContract() external view returns (XAddress memory) {
+        return remoteContract;
     }
 
     fallback(bytes calldata data) external returns (bytes memory) {
@@ -41,21 +42,22 @@ contract AsyncRemoteProxy is SuperchainEnabled {
 
         bytes32 callId = AsyncUtils.getAsyncCallId(asyncCall);
 
-        AsyncPromise promiseContract = new AsyncPromise(msg.sender, callId);
+        AsyncPromise promiseContract = new AsyncPromise(msg.sender, remoteContract.addr, callId);
         promisesByNonce[nonce] = promiseContract;
         promisesById[callId] = promiseContract;
         nonce++;
         console.log("made promise", address(promiseContract));
 
-        bytes memory relayPayload = abi.encodeWithSelector(
-            0x00
+        bytes memory relayCallPayload = abi.encodeWithSelector(
+            AsyncEnabled.relayAsyncCall.selector,
+            asyncCall
         );
 
         AsyncUtils.encodeAsyncCall(asyncCall);
         _xMessageContract(
             remoteContract.chainId,
             remoteContract.addr,
-            relayPayload
+            relayCallPayload
         );
 
         return abi.encodePacked(bytes32(uint256(uint160(address(promiseContract)))));

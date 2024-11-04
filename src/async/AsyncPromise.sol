@@ -9,13 +9,21 @@ enum AsyncPromiseState {
 
 contract AsyncPromise {
     address public immutable localInvoker;
+    address public immutable remoteTarget;
+    bool public resolved = false;
     bytes4 public callbackSelector;
     bytes32 public messageId;
     AsyncPromiseState public state = AsyncPromiseState.WAITING_FOR_SET_CALLBACK_SELECTOR;
 
-    constructor(address _invoker, bytes32 _messageId) {
+    constructor(address _invoker, address _remoteTarget, bytes32 _messageId) {
         localInvoker = _invoker;
+        remoteTarget = _remoteTarget;
         messageId = _messageId;
+    }
+
+    function markResolved() external {
+        require(msg.sender == localInvoker, "Only the invoker can mark this promise's callback resolved");
+        resolved = true;
     }
 
     fallback() external {

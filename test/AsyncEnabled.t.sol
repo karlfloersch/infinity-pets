@@ -40,30 +40,32 @@ contract AsyncEnabledTest is Test {
         assertEq(remoteProxyTarget.chainId, remoteChainId);
     }
 
+    // TODO: duplicate above test but for non-self address
+
     function test_makePromise() public {
-        // uint256 remoteChainId = 420;
-        // address myPromise = asyncContract.makeFunc1Promise(remoteChainId);
+        uint256 remoteChainId = 420;
+        address myPromise = asyncContract.makeFunc1Promise(remoteChainId);
 
-        // AsyncCall memory asyncCall = AsyncCall(
-        //     XAddress(address(asyncContract), block.chainid),    
-        //     XAddress(address(asyncContract), remoteChainId),
-        //     0,
-        //     abi.encodeWithSelector(MyAsyncEnabled.myAsyncFunction1.selector)
-        // );
+        AsyncCall memory asyncCall = AsyncCall(
+            XAddress(address(asyncContract), block.chainid),    
+            XAddress(address(asyncContract), remoteChainId),
+            0,
+            abi.encodeWithSelector(MyAsyncEnabled.myAsyncFunction1.selector)
+        );
 
-        // bytes32 expectedMessageId = AsyncUtils.getAsyncCallId(asyncCall);
+        bytes32 expectedMessageId = AsyncUtils.getAsyncCallId(asyncCall);
 
-        // bytes32 messageId = AsyncPromise(myPromise).messageId();
-        // assertEq(messageId, expectedMessageId);
+        bytes32 messageId = AsyncPromise(myPromise).messageId();
+        assertEq(messageId, expectedMessageId);
     }
 
     function test_addCallback() public {
-        // uint256 remoteChainId = 420;
-        // address myPromise = asyncContract.makeFunc1Callback(remoteChainId);
+        uint256 remoteChainId = 420;
+        address myPromise = asyncContract.makeFunc1Callback(remoteChainId);
 
-        // bytes4 callbackSelector = AsyncPromise(myPromise).callbackSelector();
-        // // assert callback selector is func1
-        // assertEq(callbackSelector, bytes4(MyAsyncEnabled.myCallback1.selector));
+        bytes4 callbackSelector = AsyncPromise(myPromise).callbackSelector();
+        // assert callback selector is func1
+        assertEq(callbackSelector, bytes4(MyAsyncEnabled.myCallback1.selector));
     }
 }
 

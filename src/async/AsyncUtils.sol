@@ -16,7 +16,8 @@ struct AsyncCall {
 
 struct AsyncCallback {
     bytes32 asyncCallId;
-    bytes returnDataForCallback;
+    bool success;
+    bytes returnData;
 }
 
 library AsyncUtils {
