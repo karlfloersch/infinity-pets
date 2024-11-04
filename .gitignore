@@ -15,3 +15,11 @@ docs/
 
 # TypeScript build info in frontend
 frontend/*.tsbuildinfo
+
+# Hardhat stuff
+node_modules/
+artifacts/
+cache_hardhat/
+
+# Mac OS
+.DS_Store
