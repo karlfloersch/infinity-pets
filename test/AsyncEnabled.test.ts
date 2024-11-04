@@ -8,7 +8,7 @@ describe("AsyncEnabled", function () {
   let chainIdA: bigint;
   let chainIdB: bigint;
   
-  let myAsyncContractA: bigInt;
+  let myAsyncContractA: MyAsyncEnabled;
 
   let myAsyncContractB: MyAsyncEnabled;
 
