@@ -1,7 +1,6 @@
 # Compiler files
 cache/
 out/
-build_promise/
 
 # Ignores development broadcast logs
 !/broadcast

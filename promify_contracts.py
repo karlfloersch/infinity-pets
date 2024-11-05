@@ -68,7 +68,9 @@ interface {func_name}Promise {{
     depth = len(relative_path.parts)
     import_path = "../" * depth + str(output_file_path.relative_to(output_base_dir.parent))
     for contract_name in contracts:
-        import_statement = f'import {{Remote{contract_name}}} from "{import_path}";\n'
+        # Collect all promise interface names
+        promise_interface_names = ', '.join(f"{func_name}Promise" for func_name, _, _ in async_functions)
+        import_statement = f'import {{Remote{contract_name}, {promise_interface_names}}} from "{import_path}";\n'
         if import_statement not in content:
             logging.info(f"Adding import statement to {solidity_file_path}")
             # Find the end of the pragma line
