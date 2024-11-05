@@ -2,6 +2,7 @@ import re
 import os
 import logging
 from pathlib import Path
+import argparse
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
@@ -81,8 +82,27 @@ interface {func_name}Promise {{
                 with open(solidity_file_path, 'w') as file:
                     file.write(updated_content)
 
-# Process all .sol files in the ./src directory
-src_dir = Path('src')
-output_base_dir = Path('build_promise')
-for solidity_file in src_dir.rglob('*.sol'):
-    generate_interfaces(solidity_file, output_base_dir)
+def main():
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description='Generate promise interfaces for Solidity contracts.')
+    parser.add_argument('--file', type=str, help='The name of the Solidity file (without .sol extension) to process.')
+    args = parser.parse_args()
+
+    # Process all .sol files in the ./src directory
+    src_dir = Path('src')
+    output_base_dir = Path('build_promise')
+
+    if args.file:
+        # Process only the specified file
+        solidity_file = src_dir / f"{args.file}.sol"
+        if solidity_file.exists():
+            generate_interfaces(solidity_file, output_base_dir)
+        else:
+            logging.error(f"File {solidity_file} does not exist.")
+    else:
+        # Process all .sol files
+        for solidity_file in src_dir.rglob('*.sol'):
+            generate_interfaces(solidity_file, output_base_dir)
+
+if __name__ == "__main__":
+    main()
