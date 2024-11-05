@@ -64,6 +64,19 @@ interface {func_name}Promise {{
         for remote_interface in remote_interfaces:
             output_file.write(remote_interface)
 
+    # Add import statement to the original Solidity file if not already present
+    depth = len(relative_path.parts)
+    import_path = "../" * depth + str(output_file_path.relative_to(output_base_dir.parent))
+    for contract_name in contracts:
+        import_statement = f'import {{Remote{contract_name}}} from "{import_path}";\n'
+        if import_statement not in content:
+            logging.info(f"Adding import statement to {solidity_file_path}")
+            # Insert the import statement after the pragma line
+            pragma_end = content.find('\n') + 1
+            updated_content = content[:pragma_end] + import_statement + content[pragma_end:]
+            with open(solidity_file_path, 'w') as file:
+                file.write(updated_content)
+
 # Process all .sol files in the ./src directory
 src_dir = Path('src')
 output_base_dir = Path('build_promise')
