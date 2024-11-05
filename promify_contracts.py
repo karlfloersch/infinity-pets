@@ -71,11 +71,13 @@ interface {func_name}Promise {{
         import_statement = f'import {{Remote{contract_name}}} from "{import_path}";\n'
         if import_statement not in content:
             logging.info(f"Adding import statement to {solidity_file_path}")
-            # Insert the import statement after the pragma line
-            pragma_end = content.find('\n') + 1
-            updated_content = content[:pragma_end] + import_statement + content[pragma_end:]
-            with open(solidity_file_path, 'w') as file:
-                file.write(updated_content)
+            # Find the end of the pragma line
+            pragma_index = content.find('pragma')
+            if pragma_index != -1:
+                pragma_end = content.find('\n', pragma_index) + 1
+                updated_content = content[:pragma_end] + import_statement + content[pragma_end:]
+                with open(solidity_file_path, 'w') as file:
+                    file.write(updated_content)
 
 # Process all .sol files in the ./src directory
 src_dir = Path('src')
