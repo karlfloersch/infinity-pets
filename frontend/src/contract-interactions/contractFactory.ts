@@ -1,4 +1,4 @@
-import { Address, TransactionReceipt, Abi, keccak256, toHex, getCreate2Address, Log, Block } from 'viem'
+import { Address, TransactionReceipt, Abi, keccak256, toHex, getCreate2Address, Log, Block, encodeFunctionData } from 'viem'
 import { CREATE2_FACTORY_ADDRESS } from '../constants'
 import { account, getClient } from './wallet'
 
@@ -99,21 +99,54 @@ export async function sendTx(
 ): Promise<TransactionReceipt> {
   const { publicClient, walletClient } = getClient(chainId)
   console.debug(`Preparing to send transaction for function ${functionName} with args:`, args)
-  
-  // Simulate the contract call to get the transaction request
-  const { request } = await publicClient.simulateContract({
-    address: contractAddress,
+
+  // 1. Encode the function data
+  const data = encodeFunctionData({
     abi,
     functionName,
     args,
-    account: account.address,
   })
 
-  // Send the transaction
-  const hash = await walletClient.writeContract(request)
-  console.debug(`${functionName} transaction sent. Hash:`, hash)
+  // 2. Get the chain
+  const chain = walletClient.chain
 
-  // Wait for the transaction receipt
+  // 3. Get the nonce (convert to number)
+  const nonceBigInt = await publicClient.getTransactionCount({
+    address: account.address,
+    blockTag: 'pending',
+  })
+  const nonce = Number(nonceBigInt)
+
+  // 4. Estimate gas limit
+  const gasLimit = await publicClient.estimateGas({
+    account: account.address,
+    to: contractAddress,
+    data,
+  })
+
+  // 5. Get gas price (you can also use EIP-1559 fields)
+  const gasPrice = await publicClient.getGasPrice()
+
+  // 6. Build the transaction object with correct types
+  const transaction = {
+    to: contractAddress as Address,
+    data: data as `0x${string}`,
+    gas: gasLimit as bigint,
+    gasPrice: gasPrice as bigint,
+    nonce: nonce as number,
+    chain,
+    account,
+  }
+
+  // 7. Sign the transaction
+  const serializedTransaction = await walletClient.signTransaction(transaction)
+  console.debug(`${functionName} transaction signed. Serialized:`, serializedTransaction)
+
+  // 8. Send the raw transaction
+  const hash = await walletClient.sendRawTransaction({ serializedTransaction })
+  console.debug(`${functionName} raw transaction sent. Hash:`, hash)
+
+  // 9. Wait for the transaction receipt
   const receipt = await publicClient.waitForTransactionReceipt({ hash })
   console.debug(`${functionName} transaction receipt:`, receipt)
 
