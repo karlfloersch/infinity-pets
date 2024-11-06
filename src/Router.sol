@@ -2,30 +2,27 @@
 pragma solidity ^0.8.13;
 
 contract Router {
-    uint256 public constant INITIAL_CHAIN_ID = 901;
-    uint256 public constant MAX_CHAIN_ID = 905;
+    uint256[] public chainIds = [
+        11473209,
+        21473209
+    ];
 
     mapping(uint256 => bool) public discoverableChains;
-    uint256 public nextChainId;
+    uint256 public nextChainId = 0;
 
     event ChainAdded(uint256 indexed chainId);
 
     constructor() {
-        require(block.chainid == INITIAL_CHAIN_ID, "Router can only be deployed on the initial chain");
-        nextChainId = INITIAL_CHAIN_ID;
+        require(block.chainid == chainIds[0], "Router can only be deployed on the initial chain");
         addNewChain();  // Add the initial chain
     }
 
     function addNewChain() public {
-        require(nextChainId <= MAX_CHAIN_ID, "Maximum number of chains reached");
-        require(!discoverableChains[nextChainId], "Chain already discoverable");
-
+        require(nextChainId < chainIds.length, "Maximum number of chains reached");
         discoverableChains[nextChainId] = true;
         emit ChainAdded(nextChainId);
-        
-        if (nextChainId < MAX_CHAIN_ID) {
-            nextChainId++;
-        }
+
+        nextChainId++;
     }
 
     function isChainDiscoverable(uint256 chainId) public view returns (bool) {
@@ -33,23 +30,25 @@ contract Router {
     }
 
     function getDiscoverableChains() public view returns (uint256[] memory) {
+        // Count discoverable chains first
         uint256 count = 0;
-        for (uint256 i = INITIAL_CHAIN_ID; i <= nextChainId; i++) {
+        for (uint256 i = 0; i < chainIds.length; i++) {
             if (discoverableChains[i]) {
                 count++;
             }
         }
 
-        uint256[] memory chains = new uint256[](count);
+        // Create array of correct size and populate it
+        uint256[] memory discoverable = new uint256[](count);
         uint256 index = 0;
-        for (uint256 i = INITIAL_CHAIN_ID; i <= nextChainId; i++) {
+        for (uint256 i = 0; i < chainIds.length; i++) {
             if (discoverableChains[i]) {
-                chains[index] = i;
+                discoverable[index] = chainIds[i];
                 index++;
             }
         }
 
-        return chains;
+        return discoverable;
     }
 }
 
