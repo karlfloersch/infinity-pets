@@ -12,6 +12,7 @@ docs/
 
 # Dotenv file
 .env
+.envrc
 
 # TypeScript build info in frontend
 frontend/*.tsbuildinfo
