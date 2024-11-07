@@ -1,0 +1,9 @@
+# Default private key for development (Supersim's first account)
+export DEFAULT_PRIVATE_KEY="FILL ME IN"
+
+# Chain IDs as comma-separated list
+export CHAIN_IDS="11473209,21473209"
+
+# RPC URLs for each chain
+export RPC_URL_11473209="https://interop-devnet-0.optimism.io/"
+export RPC_URL_21473209="https://interop-devnet-1.optimism.io/"
