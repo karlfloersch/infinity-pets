@@ -13,3 +13,5 @@ remappings = [
   "@solady/=lib/optimism/packages/contracts-bedrock/lib/solady/src/",
   "@openzeppelin/contracts=lib/optimism/packages/contracts-bedrock/lib/openzeppelin-contracts/contracts"
 ]
+
+bytecode_hash = 'none'

@@ -1,4 +1,4 @@
-pragma solidity ^0.8.13;
+pragma solidity 0.8.27;
 
 // SuperchainEnabled provides utilities for cross-chain event validation,
 // sending messages, and receiving messages with modifiers.
