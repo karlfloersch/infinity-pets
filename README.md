@@ -9,6 +9,7 @@ $ # modify the .envrc (see .envrc.example.devnet)
 $ just serve-frontend
 ```
 
+## Context
 
 An example horizontally scalable smart contract system and frontend application.
 
