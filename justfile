@@ -4,6 +4,11 @@
 default:
     @just --list
 
+# Install all dependencies (npm + forge)
+install:
+    cd frontend && npm install
+    forge install
+
 # Build the smart contracts using Forge
 build-contracts:
     forge build
