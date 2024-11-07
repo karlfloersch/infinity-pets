@@ -1,13 +1,13 @@
 import { Address, TransactionReceipt, Abi } from 'viem';
 import { getXContract } from '../contractFactory';
-
+import { CHAIN_IDS } from '../../constants';
 import { abi as routerAbi, bytecode as routerBytecode } from '../../../../out/Router.sol/Router.json'
 
 export class RouterContract {
   private routerContract;
 
   constructor(chainId: number) {
-    this.routerContract = getXContract(chainId, routerAbi as Abi, routerBytecode.object as `0x${string}`);
+    this.routerContract = getXContract(chainId, routerAbi as Abi, routerBytecode.object as `0x${string}`, [CHAIN_IDS]);
   }
 
   async deployRouterContract(): Promise<{ contractAddress: Address; receipt: TransactionReceipt }> {

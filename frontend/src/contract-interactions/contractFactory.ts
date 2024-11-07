@@ -1,4 +1,4 @@
-import { Address, TransactionReceipt, Abi, keccak256, toHex, getCreate2Address, Log, Block, encodeFunctionData } from 'viem'
+import { Address, TransactionReceipt, Abi, keccak256, toHex, getCreate2Address, Log, Block, encodeFunctionData, encodeDeployData } from 'viem'
 import { CREATE2_FACTORY_ADDRESS } from '../constants'
 import { account, getClient } from './wallet'
 
@@ -23,8 +23,8 @@ interface ContractWrapper {
 const defaultSalt = '0x' + keccak256(toHex('my_salt')).slice(2, 34).padStart(64, '0') as `0x${string}`
 
 // Function to compute contract address
-export function computeXContractAddress(bytecode: `0x${string}`, saltHex: `0x${string}` = defaultSalt): Address {
-  const initCodeHash = keccak256(bytecode)
+export function computeXContractAddress(initcode: `0x${string}`, saltHex: `0x${string}` = defaultSalt): Address {
+  const initCodeHash = keccak256(initcode)
   return getCreate2Address({
     from: CREATE2_FACTORY_ADDRESS,
     salt: saltHex,
@@ -209,16 +209,25 @@ export function getXContract(
   chainId: number,
   abi: Abi,
   bytecode: `0x${string}`,
+  constructorArgs: any[] = [],
   salt: `0x${string}` = defaultSalt
 ): ContractWrapper {
-  const contractAddress = computeXContractAddress(bytecode, salt)
+  // Use encodeDeployData to combine bytecode and constructor args
+  const deployData = encodeDeployData({
+    abi,
+    bytecode,
+    args: constructorArgs
+  })
+
+  // Use the encoded deploy data to compute the contract address
+  const contractAddress = computeXContractAddress(deployData, salt)
 
   const wrapper: ContractWrapper = {
     address: contractAddress,
     chainId,
     sendTx: (functionName: string, args: any[] = []) => sendTx(chainId, contractAddress, abi, functionName, args),
     call: (functionName: string, args: any[] = []) => call(chainId, contractAddress, abi, functionName, args),
-    deploy: () => deployXContract(chainId, bytecode, salt),
+    deploy: () => deployXContract(chainId, deployData, salt),
     isDeployed: () => isXContractDeployed(chainId, contractAddress),
     watchEvents: (fromBlock: bigint, onEvent: (log: Log, block: Block) => void) => 
       watchContractEvents(chainId, contractAddress, abi, fromBlock, onEvent),

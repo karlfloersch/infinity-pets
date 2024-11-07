@@ -2,25 +2,16 @@
 pragma solidity ^0.8.13;
 
 contract Router {
-    uint256[] public chainIds = [
-        11473209,
-        21473209
-    ];
-    // uint256[] public chainIds = [
-    //     901,
-    //     902,
-    //     903,
-    //     904,
-    //     905
-    // ];
+    uint256[] public chainIds;
 
     mapping(uint256 => bool) public discoverableChains;
     uint256 public nextChainId = 0;
 
     event ChainAdded(uint256 indexed chainId);
 
-    constructor() {
-        require(block.chainid == chainIds[0], "Router can only be deployed on the initial chain");
+    constructor(uint256[] memory _chainIds) {
+        require(block.chainid == _chainIds[0], "Router can only be deployed on the initial chain");
+        chainIds = _chainIds;
         addNewChain();  // Add the initial chain
     }
 
