@@ -2,17 +2,17 @@
 pragma solidity ^0.8.13;
 
 contract Router {
-    // uint256[] public chainIds = [
-    //     11473209,
-    //     21473209
-    // ];
     uint256[] public chainIds = [
-        901,
-        902,
-        903,
-        904,
-        905
+        11473209,
+        21473209
     ];
+    // uint256[] public chainIds = [
+    //     901,
+    //     902,
+    //     903,
+    //     904,
+    //     905
+    // ];
 
     mapping(uint256 => bool) public discoverableChains;
     uint256 public nextChainId = 0;

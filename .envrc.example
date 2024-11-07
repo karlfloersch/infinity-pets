@@ -1,0 +1,12 @@
+# Default private key for development (Supersim's first account)
+export DEFAULT_PRIVATE_KEY="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+
+# Chain IDs as comma-separated list
+export CHAIN_IDS="901,902,903,904,905"
+
+# RPC URLs for each chain
+export RPC_URL_901="http://localhost:9545"
+export RPC_URL_902="http://localhost:9546"
+export RPC_URL_903="http://localhost:9547"
+export RPC_URL_904="http://localhost:9548"
+export RPC_URL_905="http://localhost:9549"
