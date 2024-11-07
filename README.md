@@ -6,6 +6,7 @@ To use it for the devnet
 $ just install
 $ just build
 $ # modify the .envrc (see .envrc.example.devnet)
+$ # make sure you have eth on the two devnets
 $ just serve-frontend
 ```
 
