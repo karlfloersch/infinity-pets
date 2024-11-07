@@ -1,5 +1,15 @@
 ## Infinity Pets
 
+## Setup
+To use it for the devnet
+```
+$ just install
+$ just build
+$ # modify the .envrc (see .envrc.example.devnet)
+$ just serve-frontend
+```
+
+
 An example horizontally scalable smart contract system and frontend application.
 
 The demo should:
